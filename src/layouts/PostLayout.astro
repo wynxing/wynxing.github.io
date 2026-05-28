@@ -1,0 +1,41 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import BaseLayout from './BaseLayout.astro';
+import GiscusComments from '../components/GiscusComments.astro';
+import InventoryTags from '../components/InventoryTags.astro';
+import { formatDate, readingTime } from '../utils/content';
+
+type Entry = CollectionEntry<'blog'> | CollectionEntry<'notes'> | CollectionEntry<'projects'>;
+
+interface Props {
+  entry: Entry;
+  headings?: { depth: number; slug: string; text: string }[];
+}
+
+const { entry } = Astro.props;
+const body = 'body' in entry ? entry.body : '';
+const minutes = readingTime(body);
+---
+
+<BaseLayout title={entry.data.title} description={entry.data.description}>
+  <article class="site-shell article">
+    <header class="pixel-frame article-header">
+      <p class="eyebrow">{entry.collection} / Save File</p>
+      <h1>{entry.data.title}</h1>
+      <p class="muted">{entry.data.description}</p>
+      <div class="meta-line">
+        <span>{formatDate(entry.data.date)}</span>
+        <span>·</span>
+        <span>{minutes}</span>
+        {'category' in entry.data && <><span>·</span><span>{entry.data.category}</span></>}
+        {'mood' in entry.data && <><span>·</span><span>{entry.data.mood}</span></>}
+        {'status' in entry.data && <><span>·</span><span>{entry.data.status}</span></>}
+      </div>
+      <InventoryTags tags={entry.data.tags} />
+    </header>
+    <div class="prose" data-pagefind-body>
+      <slot />
+    </div>
+    <GiscusComments />
+  </article>
+</BaseLayout>

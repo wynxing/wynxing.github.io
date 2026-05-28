@@ -1,0 +1,24 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import InventoryTags from './InventoryTags.astro';
+import { entryHref, formatDate } from '../utils/content';
+
+type Entry = CollectionEntry<'blog'> | CollectionEntry<'notes'> | CollectionEntry<'projects'>;
+
+interface Props {
+  entry: Entry;
+}
+
+const { entry } = Astro.props;
+---
+
+<a class="card" href={entryHref(entry)} data-pagefind-ignore>
+  <div class="meta-line">
+    <span>{entry.collection.toUpperCase()}</span>
+    <span>·</span>
+    <span>{formatDate(entry.data.date)}</span>
+  </div>
+  <h2>{entry.data.title}</h2>
+  <p class="muted">{entry.data.description}</p>
+  <InventoryTags tags={entry.data.tags.slice(0, 3)} />
+</a>

@@ -1,0 +1,21 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PostCard from '../../components/PostCard.astro';
+import { byDateDesc } from '../../utils/content';
+
+const notes = byDateDesc(await getCollection('notes', ({ data }) => !data.draft));
+---
+
+<BaseLayout title="Notes" description="灵感、摘录、踩坑和未完成的短想法。">
+  <section class="site-shell list-page">
+    <header class="page-header">
+      <p class="eyebrow">Notebook</p>
+      <h1>Notes</h1>
+      <p class="muted">轻量记录区，用来存放灵感、摘录、踩坑、短想法和未完成的思考。</p>
+    </header>
+    <div class="grid grid-3">
+      {notes.map((entry) => <PostCard entry={entry} />)}
+    </div>
+  </section>
+</BaseLayout>

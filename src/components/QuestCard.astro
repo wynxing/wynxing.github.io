@@ -1,0 +1,26 @@
+---
+interface Props {
+  title: string;
+  description: string;
+  value?: string;
+  tags?: string[];
+}
+
+const { title, description, value = '64%', tags = [] } = Astro.props;
+---
+
+<section class="card">
+  <div class="meta-line">
+    <span>Current Quest</span>
+    <span>·</span>
+    <span>{value}</span>
+  </div>
+  <h2>{title}</h2>
+  <p class="muted">{description}</p>
+  <div class="exp-bar" aria-hidden="true" style={`--value: ${value}`}><span></span></div>
+  {tags.length > 0 && (
+    <ul class="tag-list">
+      {tags.map((tag) => <li class="tag">{tag}</li>)}
+    </ul>
+  )}
+</section>

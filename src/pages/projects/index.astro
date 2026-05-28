@@ -1,0 +1,21 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PostCard from '../../components/PostCard.astro';
+import { byDateDesc } from '../../utils/content';
+
+const projects = byDateDesc(await getCollection('projects', ({ data }) => !data.draft));
+---
+
+<BaseLayout title="Projects" description="项目背景、过程、技术选择和复盘。">
+  <section class="site-shell list-page">
+    <header class="page-header">
+      <p class="eyebrow">Builds</p>
+      <h1>Projects</h1>
+      <p class="muted">项目展示区，不只放技术栈，也记录为什么做、怎么做、遇到什么问题和学到了什么。</p>
+    </header>
+    <div class="grid grid-3">
+      {projects.map((entry) => <PostCard entry={entry} />)}
+    </div>
+  </section>
+</BaseLayout>

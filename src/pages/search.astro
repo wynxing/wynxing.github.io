@@ -1,0 +1,15 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SearchBox from '../components/SearchBox.astro';
+---
+
+<BaseLayout title="Search" description="搜索 Wynn's Save Point 的文章、项目和笔记。">
+  <section class="site-shell list-page">
+    <header class="page-header">
+      <p class="eyebrow">Search Terminal</p>
+      <h1>Search</h1>
+      <p class="muted">搜索文章、项目和笔记。索引由 Pagefind 在静态构建后生成。</p>
+    </header>
+    <SearchBox />
+  </section>
+</BaseLayout>

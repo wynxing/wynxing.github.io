@@ -1,0 +1,94 @@
+---
+import '../styles/global.css';
+import { SITE_DESCRIPTION, SITE_TITLE, cloudflareAnalyticsToken, navItems } from '../consts';
+import ThemeToggle from '../components/ThemeToggle.astro';
+
+interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+}
+
+const {
+  title = SITE_TITLE,
+  description = SITE_DESCRIPTION,
+  image = '/favicon.svg',
+} = Astro.props;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const displayTitle = title === SITE_TITLE ? title : `${title} · ${SITE_TITLE}`;
+const isProd = import.meta.env.PROD;
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{displayTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="alternate" type="application/rss+xml" title={SITE_TITLE} href="/rss.xml" />
+    <meta property="og:title" content={displayTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={new URL(image, Astro.site)} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <script is:inline>
+      const savedTheme = localStorage.getItem('theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      document.documentElement.dataset.theme = savedTheme || (prefersDark ? 'dark' : 'light');
+    </script>
+    {isProd && (
+      <script
+        is:inline
+        defer
+        src="https://static.cloudflareinsights.com/beacon.min.js"
+        data-cf-beacon={`{"token":"${cloudflareAnalyticsToken}"}`}
+      />
+    )}
+  </head>
+  <body>
+    <a href="#content" class="skip-link">跳到正文</a>
+    <div class="reading-progress" aria-hidden="true"><span data-progress></span></div>
+    <header class="site-header">
+      <nav class="site-shell nav" aria-label="Main navigation">
+        <a class="brand" href="/" aria-label={SITE_TITLE}>
+          <span>Wynn's Save Point</span>
+          <span>Code · Builds · Thoughts</span>
+        </a>
+        <div class="nav-links">
+          {navItems.map((item) => (
+            <a href={item.href} aria-current={Astro.url.pathname === item.href ? 'page' : undefined}>
+              {item.label}
+            </a>
+          ))}
+        </div>
+        <ThemeToggle />
+      </nav>
+    </header>
+    <main id="content">
+      <slot />
+    </main>
+    <footer class="site-footer">
+      <div class="site-shell footer-inner">
+        <span>Saved at Wynn's Save Point.</span>
+        <span>RSS / Search / Notes online.</span>
+      </div>
+    </footer>
+    <script is:inline>
+      const progress = document.querySelector('[data-progress]');
+      const updateProgress = () => {
+        const doc = document.documentElement;
+        const total = doc.scrollHeight - doc.clientHeight;
+        const percent = total > 0 ? Math.min(100, Math.max(0, (doc.scrollTop / total) * 100)) : 0;
+        if (progress) progress.style.width = `${percent}%`;
+      };
+      updateProgress();
+      document.addEventListener('scroll', updateProgress, { passive: true });
+      window.addEventListener('resize', updateProgress);
+    </script>
+  </body>
+</html>

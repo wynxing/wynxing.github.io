@@ -1,0 +1,41 @@
+<section class="pixel-frame search-panel">
+  <div id="search"></div>
+  <p class="muted" data-search-fallback>搜索索引会在生产构建后生成；本地请先运行 pnpm build 再 preview。</p>
+</section>
+
+<script>
+  const fallback = document.querySelector<HTMLElement>('[data-search-fallback]');
+  const pagefindUiPath = '/pagefind/pagefind-ui.js';
+
+  import(/* @vite-ignore */ pagefindUiPath)
+    .then(() => {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = '/pagefind/pagefind-ui.css';
+      document.head.append(link);
+
+      if ('PagefindUI' in window) {
+        // @ts-expect-error PagefindUI is provided by the generated Pagefind bundle.
+        new window.PagefindUI({
+          element: '#search',
+          showSubResults: true,
+          showImages: false,
+          translations: {
+            placeholder: '搜索文章、项目或笔记',
+            clear_search: '清空',
+            load_more: '加载更多',
+            search_label: '搜索',
+            filters_label: '筛选',
+            zero_results: '没有找到结果',
+            many_results: '[COUNT] 个结果',
+            one_result: '[COUNT] 个结果',
+            searching: '搜索中...',
+          },
+        });
+        fallback?.remove();
+      }
+    })
+    .catch(() => {
+      if (fallback) fallback.hidden = false;
+    });
+</script>

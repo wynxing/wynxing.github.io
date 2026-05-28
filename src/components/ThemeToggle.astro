@@ -1,0 +1,23 @@
+<button class="theme-toggle" type="button" aria-label="切换深浅主题" title="Theme">
+  <span aria-hidden="true" data-theme-icon>◐</span>
+</button>
+
+<script>
+  const toggle = document.querySelector<HTMLButtonElement>('.theme-toggle');
+  const icon = document.querySelector<HTMLElement>('[data-theme-icon]');
+
+  const syncIcon = () => {
+    const theme = document.documentElement.dataset.theme || 'light';
+    if (icon) icon.textContent = theme === 'dark' ? '☾' : '☼';
+  };
+
+  syncIcon();
+
+  toggle?.addEventListener('click', () => {
+    const current = document.documentElement.dataset.theme || 'light';
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = next;
+    localStorage.setItem('theme', next);
+    syncIcon();
+  });
+</script>
