@@ -22,13 +22,26 @@ The production site is configured for:
 https://wynn.229866007.workers.dev
 ```
 
-GitHub Actions deploys to Cloudflare Workers on pushes to `main`.
-
-Required repository secrets:
+Deployment is handled by Cloudflare Workers Git integration. Connect the
+`Yumiue/Yumiue.github.io` repository in Cloudflare and use these build settings:
 
 ```text
-CLOUDFLARE_API_TOKEN
-CLOUDFLARE_ACCOUNT_ID
+Root directory: /
+Install command: pnpm install --frozen-lockfile
+Build command: pnpm build
+Deploy command: pnpm exec wrangler deploy
+```
+
+The deploy command expects `dist/` to already exist. `pnpm build` runs Astro and
+Pagefind, producing both the static site and search index before Wrangler reads
+`wrangler.jsonc`.
+
+Local deployment checks:
+
+```text
+pnpm check
+pnpm build
+pnpm exec wrangler deploy --dry-run
 ```
 
 Cloudflare Web Analytics uses the public site token configured in `src/consts.ts`.
