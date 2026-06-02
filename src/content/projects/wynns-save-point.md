@@ -4,7 +4,7 @@ description: "一个干净、亲和、带有中度复古日系游戏感的个人
 date: 2026-05-28
 tags: ["Astro", "MDX", "Cloudflare Workers"]
 stack: ["Astro", "TypeScript", "MDX", "Tailwind CSS", "Pagefind", "Giscus"]
-repo: "https://github.com/Yumiue/Yumiue.github.io"
+repo: "https://github.com/wynxing/wynxing.github.io"
 demo: "https://wynn.229866007.workers.dev"
 status: "building"
 draft: false

@@ -19,11 +19,11 @@ pnpm deploy
 The production site is configured for:
 
 ```text
-https://wynn.myblog-site.workers.dev
+https://wynn.229866007.workers.dev
 ```
 
 Deployment is handled by Cloudflare Workers Git integration. Connect the
-`Yumiue/Yumiue.github.io` repository in Cloudflare and use these build settings:
+`wynxing/wynxing.github.io` repository in Cloudflare and use these build settings:
 
 ```text
 Root directory: /

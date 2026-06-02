@@ -2,7 +2,7 @@ export const SITE_TITLE = "Wynn's Save Point";
 export const SITE_DESCRIPTION =
   'Saving progress in code, ideas, and little experiments.';
 export const SITE_URL = 'https://wynn.229866007.workers.dev';
-export const githubProfileUrl = 'https://github.com/Yumiue';
+export const githubProfileUrl = 'https://github.com/wynxing';
 
 export const navItems = [
   { href: '/', label: 'Home' },
@@ -14,7 +14,7 @@ export const navItems = [
 ];
 
 export const giscusConfig = {
-  repo: 'Yumiue/comments',
+  repo: 'wynxing/comments',
   repoId: 'R_kgDOSqO2uQ',
   category: 'General',
   categoryId: 'DIC_kwDOSqO2uc4C-Ajz',
