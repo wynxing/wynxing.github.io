@@ -1,6 +1,6 @@
-<section class="pixel-frame search-panel">
+<section class="search-panel">
   <div id="search"></div>
-  <p class="muted" data-search-fallback>搜索索引会在生产构建后生成；本地请先运行 pnpm build 再 preview。</p>
+  <p class="muted" data-search-fallback>搜索索引会在生产构建后生成。本地请先运行 pnpm build，再用 preview 打开。</p>
 </section>
 
 <script>
@@ -17,21 +17,20 @@
       const theme = document.createElement('style');
       theme.textContent = `
         .pagefind-ui {
-          --pagefind-ui-primary: var(--accent);
+          --pagefind-ui-primary: var(--stamp);
           --pagefind-ui-text: var(--text);
           --pagefind-ui-background: var(--surface);
-          --pagefind-ui-border: var(--border);
-          --pagefind-ui-border-width: 2px;
-          --pagefind-ui-border-radius: 0;
+          --pagefind-ui-border: var(--line);
+          --pagefind-ui-border-width: 1px;
+          --pagefind-ui-border-radius: 6px;
           --pagefind-ui-font: var(--sans);
-          --pagefind-ui-tag: var(--surface-strong);
+          --pagefind-ui-tag: var(--stamp-soft);
         }
         .pagefind-ui__search-input {
-          border-radius: 0 !important;
+          border-radius: 6px !important;
           box-shadow: none !important;
-          font-family: var(--mono) !important;
         }
-        .pagefind-ui__result-link { color: var(--text) !important; font-family: var(--serif); }
+        .pagefind-ui__result-link { color: var(--text) !important; font-family: var(--sans) !important; }
         .pagefind-ui__result-excerpt { color: var(--muted) !important; }
       `;
       document.head.append(theme);
@@ -43,7 +42,7 @@
           showSubResults: true,
           showImages: false,
           translations: {
-            placeholder: '搜索文章、项目或笔记',
+            placeholder: '搜索文章',
             clear_search: '清空',
             load_more: '加载更多',
             search_label: '搜索',

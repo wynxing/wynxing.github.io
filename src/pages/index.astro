@@ -1,66 +1,25 @@
 ---
 import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
-import GameMenu from '../components/GameMenu.astro';
 import PostCard from '../components/PostCard.astro';
-import QuestCard from '../components/QuestCard.astro';
-import StatusBar from '../components/StatusBar.astro';
-import { byDateDesc, deriveExp } from '../utils/content';
+import { byDateDesc } from '../utils/content';
 
-const blog = byDateDesc(await getCollection('blog', ({ data }) => !data.draft));
-const notes = byDateDesc(await getCollection('notes', ({ data }) => !data.draft));
-const projects = byDateDesc(await getCollection('projects', ({ data }) => !data.draft));
-const published = byDateDesc([...blog, ...notes, ...projects]);
-const latest = published.slice(0, 3);
-const exp = deriveExp(published.length);
+const posts = byDateDesc(await getCollection('blog', ({ data }) => !data.draft));
 ---
 
 <BaseLayout>
-  <section class="site-shell hero">
-    <div class="pixel-frame save-menu">
-      <p class="eyebrow">Save Point / Slot 01</p>
-      <h1>Wynn's Save Point</h1>
-      <p class="subtitle">
-        Saving progress in code, ideas, and little experiments. 这里是我的技术小屋，
-        记录编程项目、技术文章，以及一些关于构建、学习和生活的思考。
-      </p>
-      <GameMenu />
-    </div>
-    <StatusBar entryCount={published.length} lastSaved={published[0]?.data.date} exp={exp} />
+  <section class="site-shell title-page">
+    <h1 class="wordmark">
+      <span class="wordmark-wynn">Wynn's</span>
+      <span class="wordmark-stamp">Save Point</span>
+    </h1>
+    <p class="lede">记录构建、学习和路上的想法。</p>
   </section>
 
-  <section class="site-shell section-tight">
-    <p class="eyebrow">Latest Logs</p>
-    <h2 class="section-title">最近存档</h2>
-    <div class="card-grid" data-count={latest.length}>
-      {latest.map((entry) => <PostCard entry={entry} />)}
+  <section class="site-shell writing-index" aria-label="文章">
+    <div class="entry-list">
+      {posts.map((entry) => <PostCard entry={entry} />)}
     </div>
-  </section>
-
-  <section class="site-shell section-tight">
-    <div class="grid grid-2">
-      <QuestCard
-        title="构建个人网站"
-        description="把长期写作、项目复盘和技术笔记收进一个安静、可维护的 Save Point。"
-        value={`${exp}%`}
-        tags={['Astro', 'MDX', 'Cloudflare Workers']}
-      />
-      <section class="card">
-        <div class="meta-line">
-          <span>Inventory</span>
-          <span>·</span>
-          <span>Tools</span>
-        </div>
-        <h2>技术与兴趣</h2>
-        <p class="muted">TypeScript / React / Python / AI / Tools / Writing</p>
-        <ul class="tag-list">
-          <li class="tag">TypeScript</li>
-          <li class="tag">React</li>
-          <li class="tag">Python</li>
-          <li class="tag">AI</li>
-          <li class="tag">Writing</li>
-        </ul>
-      </section>
-    </div>
+    <a class="more-link" href="/about/">关于 Wynn</a>
   </section>
 </BaseLayout>

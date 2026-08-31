@@ -8,15 +8,18 @@ import { byDateDesc } from '../../utils/content';
 const notes = byDateDesc(await getCollection('notes', ({ data }) => !data.draft));
 ---
 
-<BaseLayout title="Notes" description="灵感、摘录、踩坑和未完成的短想法。">
+<BaseLayout title="笔记" description="短想法和摘录。">
   <section class="site-shell list-page">
     <header class="page-header">
-      <p class="eyebrow">Notebook</p>
-      <h1>Notes</h1>
-      <p class="muted">轻量记录区，用来存放灵感、摘录、踩坑、短想法和未完成的思考。</p>
+      <h1>笔记</h1>
+      <p>短想法和摘录。</p>
     </header>
-    <ListGrid count={notes.length}>
-      {notes.map((entry) => <PostCard entry={entry} />)}
-    </ListGrid>
+    {notes.length > 0 ? (
+      <ListGrid count={notes.length}>
+        {notes.map((entry) => <PostCard entry={entry} />)}
+      </ListGrid>
+    ) : (
+      <p class="muted">还没有笔记。</p>
+    )}
   </section>
 </BaseLayout>

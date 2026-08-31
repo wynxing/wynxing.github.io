@@ -4,7 +4,7 @@ description: "记录这个个人网站第一版的定位、风格边界和长期
 date: 2026-05-28
 tags: ["Design", "Blog", "Astro"]
 category: "Thoughts"
-draft: false
+draft: true
 ---
 
 这个网站的目标不是做成冷冰冰的作品集，也不是做成完整的游戏界面。

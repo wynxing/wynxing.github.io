@@ -5,8 +5,6 @@ export type Entry =
   | CollectionEntry<'notes'>
   | CollectionEntry<'projects'>;
 
-const SAVE_GOAL = 12;
-
 export function byDateDesc<T extends Entry>(entries: T[]) {
   return entries.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
 }
@@ -43,10 +41,6 @@ export function readingTime(body = '') {
   const cjk = body.match(/[\u4e00-\u9fff]/g)?.length ?? 0;
   const minutes = Math.max(1, Math.ceil((words + cjk / 2) / 220));
   return `${minutes} 分钟`;
-}
-
-export function deriveExp(entryCount: number, goal = SAVE_GOAL) {
-  return Math.min(100, Math.round((entryCount / goal) * 100));
 }
 
 export function isCurrentPath(pathname: string, href: string) {

@@ -7,7 +7,7 @@ stack: ["Astro", "TypeScript", "MDX", "Pagefind", "Giscus"]
 repo: "https://github.com/wynxing/wynxing.github.io"
 demo: "https://wynn.229866007.workers.dev"
 status: "building"
-draft: false
+draft: true
 ---
 
 ## 项目是什么

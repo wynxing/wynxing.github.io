@@ -1,17 +1,15 @@
-<button class="theme-toggle" type="button" aria-label="切换深浅主题" title="Theme">
-  <span aria-hidden="true" data-theme-icon>◐</span>
+<button class="icon-button theme-toggle" type="button" aria-label="切换深浅主题" title="切换主题">
+  <svg class="icon-sun" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+    <circle cx="8" cy="8" r="3" fill="none" stroke="currentColor" stroke-width="1.5"></circle>
+    <path d="M8 1.5v1.4M8 13.1v1.4M1.5 8h1.4M13.1 8h1.4M3.2 3.2l1 1M11.8 11.8l1 1M3.2 12.8l1-1M11.8 4.2l1-1" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"></path>
+  </svg>
+  <svg class="icon-moon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+    <path d="M12.6 10.2A5.2 5.2 0 0 1 5.8 3.4 5.3 5.3 0 1 0 12.6 10.2Z" fill="none" stroke="currentColor" stroke-width="1.5"></path>
+  </svg>
 </button>
 
 <script>
   const toggle = document.querySelector<HTMLButtonElement>('.theme-toggle');
-  const icon = document.querySelector<HTMLElement>('[data-theme-icon]');
-
-  const syncIcon = () => {
-    const theme = document.documentElement.dataset.theme || 'light';
-    if (icon) icon.textContent = theme === 'dark' ? '☾' : '☼';
-  };
-
-  syncIcon();
 
   toggle?.addEventListener('click', () => {
     const current = document.documentElement.dataset.theme || 'light';
@@ -19,6 +17,5 @@
     document.documentElement.dataset.theme = next;
     localStorage.setItem('theme', next);
     document.dispatchEvent(new CustomEvent('themechange', { detail: next }));
-    syncIcon();
   });
 </script>

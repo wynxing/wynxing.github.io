@@ -8,15 +8,18 @@ import { byDateDesc } from '../../utils/content';
 const projects = byDateDesc(await getCollection('projects', ({ data }) => !data.draft));
 ---
 
-<BaseLayout title="Projects" description="项目背景、过程、技术选择和复盘。">
+<BaseLayout title="项目" description="项目记录。">
   <section class="site-shell list-page">
     <header class="page-header">
-      <p class="eyebrow">Builds</p>
-      <h1>Projects</h1>
-      <p class="muted">项目展示区，不只放技术栈，也记录为什么做、怎么做、遇到什么问题和学到了什么。</p>
+      <h1>项目</h1>
+      <p>项目记录。</p>
     </header>
-    <ListGrid count={projects.length}>
-      {projects.map((entry) => <PostCard entry={entry} />)}
-    </ListGrid>
+    {projects.length > 0 ? (
+      <ListGrid count={projects.length}>
+        {projects.map((entry) => <PostCard entry={entry} />)}
+      </ListGrid>
+    ) : (
+      <p class="muted">还没有项目。</p>
+    )}
   </section>
 </BaseLayout>

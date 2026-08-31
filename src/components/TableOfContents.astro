@@ -15,8 +15,8 @@ const headings = (Astro.props.headings ?? []).filter(
 ---
 
 {headings.length >= 3 && (
-  <nav class="pixel-frame toc" aria-label="目录">
-    <p class="eyebrow">Contents</p>
+  <nav class="toc" aria-label="目录">
+    <p>目录</p>
     <ol>
       {headings.map((heading) => (
         <li class={`toc-d${heading.depth}`}>

@@ -2,17 +2,14 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 ---
 
-<BaseLayout title="404" description="这个存档点不存在。">
-  <section class="site-shell missing-save">
-    <div class="pixel-frame save-menu">
-      <p class="eyebrow">404 / Missing Save File</p>
-      <h1>Save file not found</h1>
-      <p class="subtitle">这个存档点不存在，或者已经被移动到了别的目录。</p>
-      <ul class="menu-list">
-        <li><a class="active" href="/">Return Home</a></li>
-        <li><a href="/blog/">Start Reading</a></li>
-        <li><a href="/search/">Open Search</a></li>
-      </ul>
-    </div>
+<BaseLayout title="没有找到" description="没有这篇内容。">
+  <section class="site-shell missing-page">
+    <h1>没有这篇</h1>
+    <p>地址可能写错了，或者内容已经挪走。</p>
+    <ul>
+      <li><a href="/">回首页</a></li>
+      <li><a href="/blog/">看文章</a></li>
+      <li><a href="/search/">搜索</a></li>
+    </ul>
   </section>
 </BaseLayout>

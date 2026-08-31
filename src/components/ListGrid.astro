@@ -1,28 +1,22 @@
 ---
-import EmptySaveSlot from './EmptySaveSlot.astro';
-
 interface Props {
   count: number;
 }
 
 const { count } = Astro.props;
-const emptySlots = count > 0 && count < 3 ? 3 - count : count === 0 ? 3 : 0;
 const clearHref = Astro.url.pathname;
 ---
 
 <div class="list-toolbar" data-tag-toolbar hidden>
-  <p class="meta-line">
-    <span>Filter</span>
-    <span>·</span>
-    <span data-tag-name></span>
+  <p>
+    标签 <span data-tag-name></span>
   </p>
-  <a class="pixel-button" href={clearHref}>清除筛选</a>
+  <a href={clearHref}>清除筛选</a>
 </div>
-<div class="card-grid" data-card-grid data-count={count}>
+<div class="entry-list" data-card-grid data-count={count}>
   <slot />
-  {Array.from({ length: emptySlots }, () => <EmptySaveSlot />)}
 </div>
-<p class="muted" data-tag-empty hidden>没有带这个标签的存档。</p>
+<p class="muted" data-tag-empty hidden>没有带这个标签的文章。</p>
 
 <script>
   const params = new URLSearchParams(window.location.search);
@@ -34,7 +28,7 @@ const clearHref = Astro.url.pathname;
 
   if (tag && toolbar && label && grid) {
     toolbar.hidden = false;
-    label.textContent = `#${tag}`;
+    label.textContent = tag;
 
     const cards = [...grid.querySelectorAll<HTMLElement>('[data-tags]')];
     let visible = 0;
@@ -44,10 +38,6 @@ const clearHref = Astro.url.pathname;
       const match = tags.includes(tag);
       card.hidden = !match;
       if (match) visible += 1;
-    }
-
-    for (const slot of grid.querySelectorAll<HTMLElement>('[data-empty-slot]')) {
-      slot.hidden = true;
     }
 
     grid.dataset.count = String(visible);

@@ -8,12 +8,11 @@ import { byDateDesc } from '../../utils/content';
 const posts = byDateDesc(await getCollection('blog', ({ data }) => !data.draft));
 ---
 
-<BaseLayout title="Blog" description="正式文章、项目复盘、学习总结和长篇思考。">
+<BaseLayout title="文章" description="技术文章和项目复盘。">
   <section class="site-shell list-page">
     <header class="page-header">
-      <p class="eyebrow">Latest Logs</p>
-      <h1>Blog</h1>
-      <p class="muted">正式文章区，用来保存技术文章、编程项目复盘、学习总结和长篇思考。</p>
+      <h1>文章</h1>
+      <p>技术文章和项目复盘。</p>
     </header>
     <ListGrid count={posts.length}>
       {posts.map((entry) => <PostCard entry={entry} />)}
