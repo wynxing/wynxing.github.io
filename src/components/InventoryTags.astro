@@ -1,13 +1,25 @@
 ---
+import type { Entry } from '../utils/content';
+import { tagHref } from '../utils/content';
+
 interface Props {
   tags: string[];
+  collection?: Entry['collection'];
 }
 
-const { tags } = Astro.props;
+const { tags, collection } = Astro.props;
 ---
 
 {tags.length > 0 && (
   <ul class="tag-list" aria-label="Tags">
-    {tags.map((tag) => <li class="tag">#{tag}</li>)}
+    {tags.map((tag) => (
+      <li>
+        {collection ? (
+          <a class="tag" href={tagHref(collection, tag)}>#{tag}</a>
+        ) : (
+          <span class="tag">#{tag}</span>
+        )}
+      </li>
+    ))}
   </ul>
 )}

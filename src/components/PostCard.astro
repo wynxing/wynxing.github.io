@@ -12,13 +12,15 @@ interface Props {
 const { entry } = Astro.props;
 ---
 
-<a class="card" href={entryHref(entry)} data-pagefind-ignore>
-  <div class="meta-line">
-    <span>{entry.collection.toUpperCase()}</span>
-    <span>·</span>
-    <span>{formatDate(entry.data.date)}</span>
-  </div>
-  <h2>{entry.data.title}</h2>
-  <p class="muted">{entry.data.description}</p>
-  <InventoryTags tags={entry.data.tags.slice(0, 3)} />
-</a>
+<article class="card" data-pagefind-ignore data-tags={entry.data.tags.join(',')}>
+  <a class="card-link" href={entryHref(entry)}>
+    <div class="meta-line">
+      <span>{entry.collection.toUpperCase()}</span>
+      <span>·</span>
+      <span>{formatDate(entry.data.date)}</span>
+    </div>
+    <h2>{entry.data.title}</h2>
+    <p class="muted">{entry.data.description}</p>
+  </a>
+  <InventoryTags tags={entry.data.tags.slice(0, 3)} collection={entry.collection} />
+</article>

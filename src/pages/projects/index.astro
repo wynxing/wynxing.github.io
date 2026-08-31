@@ -1,6 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import ListGrid from '../../components/ListGrid.astro';
 import PostCard from '../../components/PostCard.astro';
 import { byDateDesc } from '../../utils/content';
 
@@ -14,8 +15,8 @@ const projects = byDateDesc(await getCollection('projects', ({ data }) => !data.
       <h1>Projects</h1>
       <p class="muted">项目展示区，不只放技术栈，也记录为什么做、怎么做、遇到什么问题和学到了什么。</p>
     </header>
-    <div class="grid grid-3">
+    <ListGrid count={projects.length}>
       {projects.map((entry) => <PostCard entry={entry} />)}
-    </div>
+    </ListGrid>
   </section>
 </BaseLayout>

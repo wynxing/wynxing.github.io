@@ -1,6 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import ListGrid from '../../components/ListGrid.astro';
 import PostCard from '../../components/PostCard.astro';
 import { byDateDesc } from '../../utils/content';
 
@@ -14,8 +15,8 @@ const posts = byDateDesc(await getCollection('blog', ({ data }) => !data.draft))
       <h1>Blog</h1>
       <p class="muted">正式文章区，用来保存技术文章、编程项目复盘、学习总结和长篇思考。</p>
     </header>
-    <div class="grid grid-3">
+    <ListGrid count={posts.length}>
       {posts.map((entry) => <PostCard entry={entry} />)}
-    </div>
+    </ListGrid>
   </section>
 </BaseLayout>

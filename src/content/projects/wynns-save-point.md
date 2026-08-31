@@ -3,7 +3,7 @@ title: "Wynn's Save Point"
 description: "一个干净、亲和、带有中度复古日系游戏感的个人技术博客。"
 date: 2026-05-28
 tags: ["Astro", "MDX", "Cloudflare Workers"]
-stack: ["Astro", "TypeScript", "MDX", "Tailwind CSS", "Pagefind", "Giscus"]
+stack: ["Astro", "TypeScript", "MDX", "Pagefind", "Giscus"]
 repo: "https://github.com/wynxing/wynxing.github.io"
 demo: "https://wynn.229866007.workers.dev"
 status: "building"

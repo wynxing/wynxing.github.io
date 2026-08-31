@@ -6,4 +6,6 @@
     "directory": "./dist",
     "not_found_handling": "404-page"
   }
+  // After attaching a custom domain in the Cloudflare dashboard,
+  // keep SITE_URL / astro.config site in sync with that hostname.
 }

@@ -3,6 +3,7 @@ import type { CollectionEntry } from 'astro:content';
 import BaseLayout from './BaseLayout.astro';
 import GiscusComments from '../components/GiscusComments.astro';
 import InventoryTags from '../components/InventoryTags.astro';
+import TableOfContents from '../components/TableOfContents.astro';
 import { formatDate, readingTime } from '../utils/content';
 
 type Entry = CollectionEntry<'blog'> | CollectionEntry<'notes'> | CollectionEntry<'projects'>;
@@ -12,12 +13,14 @@ interface Props {
   headings?: { depth: number; slug: string; text: string }[];
 }
 
-const { entry } = Astro.props;
+const { entry, headings = [] } = Astro.props;
 const body = 'body' in entry ? entry.body : '';
 const minutes = readingTime(body);
+const isProject = entry.collection === 'projects';
+const project = isProject ? entry.data : null;
 ---
 
-<BaseLayout title={entry.data.title} description={entry.data.description}>
+<BaseLayout title={entry.data.title} description={entry.data.description} showProgress>
   <article class="site-shell article">
     <header class="pixel-frame article-header">
       <p class="eyebrow">{entry.collection} / Save File</p>
@@ -27,12 +30,38 @@ const minutes = readingTime(body);
         <span>{formatDate(entry.data.date)}</span>
         <span>·</span>
         <span>{minutes}</span>
+        {entry.data.updated && (
+          <>
+            <span>·</span>
+            <span>更新 {formatDate(entry.data.updated)}</span>
+          </>
+        )}
         {'category' in entry.data && <><span>·</span><span>{entry.data.category}</span></>}
         {'mood' in entry.data && <><span>·</span><span>{entry.data.mood}</span></>}
         {'status' in entry.data && <><span>·</span><span>{entry.data.status}</span></>}
       </div>
-      <InventoryTags tags={entry.data.tags} />
+      <InventoryTags tags={entry.data.tags} collection={entry.collection} />
+      {project && (project.stack.length > 0 || project.repo || project.demo) && (
+        <div class="project-links">
+          {project.repo && (
+            <a class="pixel-button" href={project.repo} target="_blank" rel="noreferrer">
+              Repository
+            </a>
+          )}
+          {project.demo && (
+            <a class="pixel-button" href={project.demo} target="_blank" rel="noreferrer">
+              Demo
+            </a>
+          )}
+        </div>
+      )}
+      {project && project.stack.length > 0 && (
+        <ul class="tag-list" aria-label="Stack">
+          {project.stack.map((item) => <li class="tag">{item}</li>)}
+        </ul>
+      )}
     </header>
+    <TableOfContents headings={headings} />
     <div class="prose" data-pagefind-body>
       <slot />
     </div>

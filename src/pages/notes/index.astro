@@ -1,6 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import ListGrid from '../../components/ListGrid.astro';
 import PostCard from '../../components/PostCard.astro';
 import { byDateDesc } from '../../utils/content';
 
@@ -14,8 +15,8 @@ const notes = byDateDesc(await getCollection('notes', ({ data }) => !data.draft)
       <h1>Notes</h1>
       <p class="muted">轻量记录区，用来存放灵感、摘录、踩坑、短想法和未完成的思考。</p>
     </header>
-    <div class="grid grid-3">
+    <ListGrid count={notes.length}>
       {notes.map((entry) => <PostCard entry={entry} />)}
-    </div>
+    </ListGrid>
   </section>
 </BaseLayout>

@@ -1,16 +1,15 @@
 export const SITE_TITLE = "Wynn's Save Point";
 export const SITE_DESCRIPTION =
   'Saving progress in code, ideas, and little experiments.';
+// Change SITE_URL and astro.config `site` together when a custom domain is attached.
 export const SITE_URL = 'https://wynn.229866007.workers.dev';
 export const githubProfileUrl = 'https://github.com/wynxing';
 
 export const navItems = [
-  { href: '/', label: 'Home' },
   { href: '/blog/', label: 'Blog' },
   { href: '/projects/', label: 'Projects' },
   { href: '/notes/', label: 'Notes' },
   { href: '/about/', label: 'About' },
-  { href: '/search/', label: 'Search' },
 ];
 
 export const giscusConfig = {

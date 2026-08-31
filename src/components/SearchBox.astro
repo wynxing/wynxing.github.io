@@ -14,6 +14,28 @@
       link.href = '/pagefind/pagefind-ui.css';
       document.head.append(link);
 
+      const theme = document.createElement('style');
+      theme.textContent = `
+        .pagefind-ui {
+          --pagefind-ui-primary: var(--accent);
+          --pagefind-ui-text: var(--text);
+          --pagefind-ui-background: var(--surface);
+          --pagefind-ui-border: var(--border);
+          --pagefind-ui-border-width: 2px;
+          --pagefind-ui-border-radius: 0;
+          --pagefind-ui-font: var(--sans);
+          --pagefind-ui-tag: var(--surface-strong);
+        }
+        .pagefind-ui__search-input {
+          border-radius: 0 !important;
+          box-shadow: none !important;
+          font-family: var(--mono) !important;
+        }
+        .pagefind-ui__result-link { color: var(--text) !important; font-family: var(--serif); }
+        .pagefind-ui__result-excerpt { color: var(--muted) !important; }
+      `;
+      document.head.append(theme);
+
       if ('PagefindUI' in window) {
         // @ts-expect-error PagefindUI is provided by the generated Pagefind bundle.
         new window.PagefindUI({

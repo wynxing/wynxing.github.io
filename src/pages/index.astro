@@ -5,12 +5,14 @@ import GameMenu from '../components/GameMenu.astro';
 import PostCard from '../components/PostCard.astro';
 import QuestCard from '../components/QuestCard.astro';
 import StatusBar from '../components/StatusBar.astro';
-import { byDateDesc } from '../utils/content';
+import { byDateDesc, deriveExp } from '../utils/content';
 
 const blog = byDateDesc(await getCollection('blog', ({ data }) => !data.draft));
 const notes = byDateDesc(await getCollection('notes', ({ data }) => !data.draft));
 const projects = byDateDesc(await getCollection('projects', ({ data }) => !data.draft));
-const latest = byDateDesc([...blog, ...notes, ...projects]).slice(0, 3);
+const published = byDateDesc([...blog, ...notes, ...projects]);
+const latest = published.slice(0, 3);
+const exp = deriveExp(published.length);
 ---
 
 <BaseLayout>
@@ -24,13 +26,13 @@ const latest = byDateDesc([...blog, ...notes, ...projects]).slice(0, 3);
       </p>
       <GameMenu />
     </div>
-    <StatusBar />
+    <StatusBar entryCount={published.length} lastSaved={published[0]?.data.date} exp={exp} />
   </section>
 
   <section class="site-shell section-tight">
     <p class="eyebrow">Latest Logs</p>
     <h2 class="section-title">最近存档</h2>
-    <div class="grid grid-3">
+    <div class="card-grid" data-count={latest.length}>
       {latest.map((entry) => <PostCard entry={entry} />)}
     </div>
   </section>
@@ -40,7 +42,7 @@ const latest = byDateDesc([...blog, ...notes, ...projects]).slice(0, 3);
       <QuestCard
         title="构建个人网站"
         description="把长期写作、项目复盘和技术笔记收进一个安静、可维护的 Save Point。"
-        value="72%"
+        value={`${exp}%`}
         tags={['Astro', 'MDX', 'Cloudflare Workers']}
       />
       <section class="card">

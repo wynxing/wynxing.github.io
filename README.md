@@ -45,3 +45,13 @@ pnpm exec wrangler deploy --dry-run
 ```
 
 Cloudflare Web Analytics uses the public site token configured in `src/consts.ts`.
+
+## Custom domain
+
+The public URL is still the Workers subdomain. To attach a real domain:
+
+1. Add the hostname in Cloudflare (Workers & Pages → `wynn` → Settings → Domains & Routes).
+2. Point the DNS record to the Worker, or use a proxied CNAME.
+3. Update `site` in `astro.config.mjs` and `SITE_URL` in `src/consts.ts` to the new origin, then rebuild.
+
+Keep those two values in sync so canonical URLs, Open Graph tags, sitemap, and RSS stay on the same host.

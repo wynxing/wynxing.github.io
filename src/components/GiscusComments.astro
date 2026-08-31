@@ -2,24 +2,66 @@
 import { giscusConfig } from '../consts';
 ---
 
-<section class="pixel-frame comments" aria-label="Comments">
+<section
+  class="pixel-frame comments"
+  aria-label="Comments"
+  data-giscus
+  data-repo={giscusConfig.repo}
+  data-repo-id={giscusConfig.repoId}
+  data-category={giscusConfig.category}
+  data-category-id={giscusConfig.categoryId}
+>
   <p class="eyebrow">Comments</p>
-  <script
-    is:inline
-    src="https://giscus.app/client.js"
-    data-repo={giscusConfig.repo}
-    data-repo-id={giscusConfig.repoId}
-    data-category={giscusConfig.category}
-    data-category-id={giscusConfig.categoryId}
-    data-mapping="pathname"
-    data-strict="0"
-    data-reactions-enabled="1"
-    data-emit-metadata="0"
-    data-input-position="bottom"
-    data-theme="preferred_color_scheme"
-    data-lang="zh-CN"
-    data-loading="lazy"
-    crossorigin="anonymous"
-    async
-  />
+  <div data-giscus-mount></div>
 </section>
+
+<script>
+  const host = document.querySelector<HTMLElement>('[data-giscus]');
+  const mount = document.querySelector<HTMLElement>('[data-giscus-mount]');
+  if (host && mount) {
+    const themeFor = () =>
+      document.documentElement.dataset.theme === 'dark' ? 'noborder_gray' : 'light';
+
+    const load = () => {
+      if (mount.querySelector('script') || mount.querySelector('iframe')) return;
+
+      const script = document.createElement('script');
+      script.src = 'https://giscus.app/client.js';
+      script.async = true;
+      script.crossOrigin = 'anonymous';
+      script.setAttribute('data-repo', host.dataset.repo ?? '');
+      script.setAttribute('data-repo-id', host.dataset.repoId ?? '');
+      script.setAttribute('data-category', host.dataset.category ?? '');
+      script.setAttribute('data-category-id', host.dataset.categoryId ?? '');
+      script.setAttribute('data-mapping', 'pathname');
+      script.setAttribute('data-strict', '0');
+      script.setAttribute('data-reactions-enabled', '1');
+      script.setAttribute('data-emit-metadata', '0');
+      script.setAttribute('data-input-position', 'bottom');
+      script.setAttribute('data-theme', themeFor());
+      script.setAttribute('data-lang', 'zh-CN');
+      mount.append(script);
+    };
+
+    const syncTheme = () => {
+      const frame = mount.querySelector<HTMLIFrameElement>('iframe.giscus-frame');
+      frame?.contentWindow?.postMessage(
+        { giscus: { setConfig: { theme: themeFor() } } },
+        'https://giscus.app',
+      );
+    };
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          load();
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '200px 0px' },
+    );
+
+    observer.observe(host);
+    document.addEventListener('themechange', syncTheme);
+  }
+</script>

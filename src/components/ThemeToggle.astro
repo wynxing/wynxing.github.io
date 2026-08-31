@@ -18,6 +18,7 @@
     const next = current === 'dark' ? 'light' : 'dark';
     document.documentElement.dataset.theme = next;
     localStorage.setItem('theme', next);
+    document.dispatchEvent(new CustomEvent('themechange', { detail: next }));
     syncIcon();
   });
 </script>
