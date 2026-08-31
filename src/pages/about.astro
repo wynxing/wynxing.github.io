@@ -1,16 +1,20 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { githubProfileUrl } from '../consts';
 ---
 
-<BaseLayout title="关于" description="关于 Wynn。">
-  <section class="site-shell article">
-    <header class="article-header">
+<BaseLayout title="关于" description="关于 Wynn。" section="关于">
+  <section class="page">
+    <header class="page-header">
       <h1>关于</h1>
-      <p class="standfirst">一个喜欢写代码、做小工具、记录思考的人。</p>
+      <p>一个喜欢写代码、做小工具、记录思考的人。</p>
     </header>
     <div class="prose" data-pagefind-body>
       <p>我是 Wynn。这里写代码、小工具，以及路上的想法。</p>
       <p>长期会放技术文章和项目复盘。想慢慢写，也想以后还能回头看。</p>
+      <p>
+        代码在 <a href={githubProfileUrl} target="_blank" rel="noreferrer">GitHub</a>。
+      </p>
     </div>
   </section>
 </BaseLayout>

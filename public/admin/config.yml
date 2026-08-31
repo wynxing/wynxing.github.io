@@ -1,0 +1,79 @@
+# yaml-language-server: $schema=https://unpkg.com/@sveltia/cms@0.203.2/schema/sveltia-cms.json
+
+# 发布会 commit 到 GitHub，等 Cloudflare 构建完成后站点才会更新。
+
+backend:
+  name: github
+  repo: wynxing/wynxing.github.io
+  branch: main
+  auth_methods: [token]
+
+local_backend: true
+
+site_url: https://wynn.229866007.workers.dev
+display_url: https://wynn.229866007.workers.dev
+logo_url: /images/avatar.png
+
+media_folder: public/media
+public_folder: /media
+
+output:
+  omit_empty_optional_fields: true
+
+collections:
+  - name: blog
+    label: 文章
+    label_singular: 文章
+    folder: src/content/blog
+    create: true
+    format: yaml-frontmatter
+    extension: md
+    slug: "{{slug}}"
+    fields:
+      - { label: 标题, name: title, widget: string }
+      - { label: 摘要, name: description, widget: text }
+      - { label: 日期, name: date, widget: datetime, date_format: yyyy-MM-dd, time_format: false, picker_utc: true }
+      - { label: 更新日期, name: updated, widget: datetime, date_format: yyyy-MM-dd, time_format: false, picker_utc: true, required: false }
+      - { label: 标签, name: tags, widget: list, required: false }
+      - { label: 草稿, name: draft, widget: boolean, default: false }
+      - { label: 分类, name: category, widget: select, options: [Tech, Projects, Thoughts, Learning], default: Tech }
+      - { label: 正文, name: body, widget: markdown }
+
+  - name: notes
+    label: 笔记
+    label_singular: 笔记
+    folder: src/content/notes
+    create: true
+    format: yaml-frontmatter
+    extension: md
+    slug: "{{slug}}"
+    fields:
+      - { label: 标题, name: title, widget: string }
+      - { label: 摘要, name: description, widget: text }
+      - { label: 日期, name: date, widget: datetime, date_format: yyyy-MM-dd, time_format: false, picker_utc: true }
+      - { label: 更新日期, name: updated, widget: datetime, date_format: yyyy-MM-dd, time_format: false, picker_utc: true, required: false }
+      - { label: 标签, name: tags, widget: list, required: false }
+      - { label: 草稿, name: draft, widget: boolean, default: false }
+      - { label: 心情, name: mood, widget: select, options: [Log, Idea, Clip, Bug, Study], default: Log }
+      - { label: 正文, name: body, widget: markdown }
+
+  - name: projects
+    label: 项目
+    label_singular: 项目
+    folder: src/content/projects
+    create: true
+    format: yaml-frontmatter
+    extension: md
+    slug: "{{slug}}"
+    fields:
+      - { label: 标题, name: title, widget: string }
+      - { label: 摘要, name: description, widget: text }
+      - { label: 日期, name: date, widget: datetime, date_format: yyyy-MM-dd, time_format: false, picker_utc: true }
+      - { label: 更新日期, name: updated, widget: datetime, date_format: yyyy-MM-dd, time_format: false, picker_utc: true, required: false }
+      - { label: 标签, name: tags, widget: list, required: false }
+      - { label: 草稿, name: draft, widget: boolean, default: false }
+      - { label: 技术栈, name: stack, widget: list, required: false }
+      - { label: 仓库, name: repo, widget: string, required: false, hint: 完整 URL }
+      - { label: 演示, name: demo, widget: string, required: false, hint: 完整 URL }
+      - { label: 状态, name: status, widget: select, options: [building, paused, shipped, archived], default: building }
+      - { label: 正文, name: body, widget: markdown }

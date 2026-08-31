@@ -8,11 +8,11 @@ import { byDateDesc } from '../../utils/content';
 const projects = byDateDesc(await getCollection('projects', ({ data }) => !data.draft));
 ---
 
-<BaseLayout title="项目" description="项目记录。">
-  <section class="site-shell list-page">
+<BaseLayout title="项目" description="项目记录。" section="项目">
+  <section class="page">
     <header class="page-header">
       <h1>项目</h1>
-      <p>项目记录。</p>
+      <p>做过的工具和站点，按时间排。</p>
     </header>
     {projects.length > 0 ? (
       <ListGrid count={projects.length}>

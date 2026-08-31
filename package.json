@@ -12,6 +12,7 @@
     "check": "astro check",
     "preview": "astro preview",
     "astro": "astro",
+    "cms": "npx --yes @sveltia/cms-proxy",
     "worker:dev": "wrangler dev",
     "deploy": "wrangler deploy"
   },

@@ -17,10 +17,16 @@ const body = 'body' in entry ? entry.body : '';
 const minutes = readingTime(body);
 const isProject = entry.collection === 'projects';
 const project = isProject ? entry.data : null;
+const section = entry.collection === 'blog' ? '文章' : entry.collection === 'notes' ? '笔记' : '项目';
 ---
 
-<BaseLayout title={entry.data.title} description={entry.data.description} showProgress>
-  <article class="site-shell article">
+<BaseLayout
+  title={entry.data.title}
+  description={entry.data.description}
+  section={section}
+  showProgress
+>
+  <article class="page article">
     <header class="article-header">
       <h1>{entry.data.title}</h1>
       <p class="standfirst">{entry.data.description}</p>

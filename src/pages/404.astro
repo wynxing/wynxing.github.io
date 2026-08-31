@@ -2,13 +2,16 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 ---
 
-<BaseLayout title="没有找到" description="没有这篇内容。">
-  <section class="site-shell missing-page">
-    <h1>没有这篇</h1>
-    <p>地址可能写错了，或者内容已经挪走。</p>
-    <ul>
-      <li><a href="/">回首页</a></li>
+<BaseLayout title="没有找到" description="没有这篇内容。" section="迷失">
+  <section class="page">
+    <header class="page-header">
+      <h1>没有这篇</h1>
+      <p>地址可能写错了，或者内容已经挪走。</p>
+    </header>
+    <ul class="missing-links">
+      <li><a href="/">回轨道</a></li>
       <li><a href="/blog/">看文章</a></li>
+      <li><a href="/projects/">看项目</a></li>
       <li><a href="/search/">搜索</a></li>
     </ul>
   </section>

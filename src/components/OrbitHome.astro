@@ -1,0 +1,73 @@
+---
+const innerPlanets = [
+  { href: '/blog/', label: '文章', angle: 70, glyph: '/images/glyph-blog.png' },
+  { href: '/projects/', label: '项目', angle: 250, glyph: '/images/glyph-projects.png' },
+];
+
+const outerPlanets = [
+  { href: '/notes/', label: '笔记', angle: 60, glyph: '/images/glyph-notes.png' },
+  { href: '/about/', label: '关于', angle: 180, glyph: '/images/glyph-about.png' },
+  { href: '/admin/', label: '写一篇', angle: 300, glyph: '/images/glyph-write.png', write: true },
+];
+---
+
+<section class="orbit-home" aria-labelledby="orbit-name">
+  <p class="orbit-wordmark" aria-hidden="true">
+    <span>Save</span>
+    <span>Point</span>
+  </p>
+  <div class="orbit-sky" aria-hidden="true"></div>
+  <div class="orbit-system">
+    <div class="orbit-core">
+      <div class="orbit-crest">
+        <img
+          src="/images/avatar.png"
+          alt="Wynn 的头像，一只像素黑猫"
+          width="168"
+          height="168"
+          fetchpriority="high"
+        />
+      </div>
+      <h1 id="orbit-name">Wynn</h1>
+      <p>记录构建与路上的想法。</p>
+    </div>
+
+    <div class="orbit-lane is-inner" style="--t: 52s">
+      <div class="orbit-groove"></div>
+      <div class="orbit-rim"></div>
+      <div class="orbit-spinner">
+        {innerPlanets.map((planet) => (
+          <div class="orbit-place" style={`--a: ${planet.angle}deg`}>
+            <div class="orbit-face">
+              <a class="orbit-node" href={planet.href}>
+                <span class="orbit-medal">
+                  <img src={planet.glyph} alt="" width="32" height="32" />
+                </span>
+                <span class="orbit-label">{planet.label}</span>
+              </a>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <div class="orbit-lane is-outer" style="--t: 86s">
+      <div class="orbit-groove"></div>
+      <div class="orbit-rim"></div>
+      <div class="orbit-spinner">
+        {outerPlanets.map((planet) => (
+          <div class="orbit-place" style={`--a: ${planet.angle}deg`}>
+            <div class="orbit-face">
+              <a class:list={['orbit-node', { 'is-write': planet.write }]} href={planet.href}>
+                <span class="orbit-medal">
+                  <img src={planet.glyph} alt="" width="32" height="32" />
+                </span>
+                <span class="orbit-label">{planet.label}</span>
+              </a>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>

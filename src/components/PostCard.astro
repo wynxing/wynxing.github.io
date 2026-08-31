@@ -8,13 +8,19 @@ interface Props {
   entry: Entry;
 }
 
+const glyphs = {
+  blog: '/images/glyph-blog.png',
+  notes: '/images/glyph-notes.png',
+  projects: '/images/glyph-projects.png',
+} as const;
+
 const { entry } = Astro.props;
 ---
 
-<article class="entry" data-pagefind-ignore data-tags={entry.data.tags.join(',')}>
-  <a class="entry-link" href={entryHref(entry)}>
-    <time class="entry-date" datetime={entry.data.date.toISOString()}>{formatDate(entry.data.date)}</time>
-    <h2 class="entry-title">{entry.data.title}</h2>
-    <p class="entry-summary">{entry.data.description}</p>
+<article class="index-row" data-pagefind-ignore data-tags={entry.data.tags.join(',')}>
+  <a href={entryHref(entry)}>
+    <img class="index-glyph" src={glyphs[entry.collection]} alt="" width="32" height="32" />
+    <h2>{entry.data.title}</h2>
+    <time datetime={entry.data.date.toISOString()}>{formatDate(entry.data.date)}</time>
   </a>
 </article>

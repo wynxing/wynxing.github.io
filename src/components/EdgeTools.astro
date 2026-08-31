@@ -1,0 +1,39 @@
+---
+import ThemeToggle from './ThemeToggle.astro';
+import { isCurrentPath } from '../utils/content';
+
+interface Props {
+  fixed?: boolean;
+}
+
+const { fixed = false } = Astro.props;
+const pathname = Astro.url.pathname;
+---
+
+<div class:list={['edge-tools', { 'edge-tools-fixed': fixed }]}>
+  <a
+    class="icon-button"
+    href="/search/"
+    aria-label="搜索"
+    title="搜索"
+    aria-current={isCurrentPath(pathname, '/search/') ? 'page' : undefined}
+  >
+    <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+      <circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" stroke-width="1.5"></circle>
+      <path d="M10.5 10.5 L14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"></path>
+    </svg>
+  </a>
+  <a class="icon-button" href="/admin/" aria-label="写一篇" title="写一篇">
+    <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+      <path
+        d="M10 2.8 13.2 6 6 13.2H2.8V10Z"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.5"
+        stroke-linejoin="round"
+      ></path>
+      <path d="M8.6 4.2 11.8 7.4" fill="none" stroke="currentColor" stroke-width="1.5"></path>
+    </svg>
+  </a>
+  <ThemeToggle />
+</div>

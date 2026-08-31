@@ -8,14 +8,18 @@ import { byDateDesc } from '../../utils/content';
 const posts = byDateDesc(await getCollection('blog', ({ data }) => !data.draft));
 ---
 
-<BaseLayout title="文章" description="技术文章和项目复盘。">
-  <section class="site-shell list-page">
+<BaseLayout title="文章" description="技术文章和项目复盘。" section="文章">
+  <section class="page">
     <header class="page-header">
       <h1>文章</h1>
       <p>技术文章和项目复盘。</p>
     </header>
-    <ListGrid count={posts.length}>
-      {posts.map((entry) => <PostCard entry={entry} />)}
-    </ListGrid>
+    {posts.length > 0 ? (
+      <ListGrid count={posts.length}>
+        {posts.map((entry) => <PostCard entry={entry} />)}
+      </ListGrid>
+    ) : (
+      <p class="muted">还没有文章。</p>
+    )}
   </section>
 </BaseLayout>

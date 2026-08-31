@@ -12,7 +12,7 @@
   const toggle = document.querySelector<HTMLButtonElement>('.theme-toggle');
 
   toggle?.addEventListener('click', () => {
-    const current = document.documentElement.dataset.theme || 'light';
+    const current = document.documentElement.dataset.theme || 'dark';
     const next = current === 'dark' ? 'light' : 'dark';
     document.documentElement.dataset.theme = next;
     localStorage.setItem('theme', next);

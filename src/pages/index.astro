@@ -1,25 +1,8 @@
 ---
-import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
-import PostCard from '../components/PostCard.astro';
-import { byDateDesc } from '../utils/content';
-
-const posts = byDateDesc(await getCollection('blog', ({ data }) => !data.draft));
+import OrbitHome from '../components/OrbitHome.astro';
 ---
 
 <BaseLayout>
-  <section class="site-shell title-page">
-    <h1 class="wordmark">
-      <span class="wordmark-wynn">Wynn's</span>
-      <span class="wordmark-stamp">Save Point</span>
-    </h1>
-    <p class="lede">记录构建、学习和路上的想法。</p>
-  </section>
-
-  <section class="site-shell writing-index" aria-label="文章">
-    <div class="entry-list">
-      {posts.map((entry) => <PostCard entry={entry} />)}
-    </div>
-    <a class="more-link" href="/about/">关于 Wynn</a>
-  </section>
+  <OrbitHome />
 </BaseLayout>

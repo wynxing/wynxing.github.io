@@ -8,8 +8,8 @@ import { byDateDesc } from '../../utils/content';
 const notes = byDateDesc(await getCollection('notes', ({ data }) => !data.draft));
 ---
 
-<BaseLayout title="笔记" description="短想法和摘录。">
-  <section class="site-shell list-page">
+<BaseLayout title="笔记" description="短想法和摘录。" section="笔记">
+  <section class="page">
     <header class="page-header">
       <h1>笔记</h1>
       <p>短想法和摘录。</p>
