@@ -10,8 +10,8 @@ backend:
 
 local_backend: true
 
-site_url: https://wynn.229866007.workers.dev
-display_url: https://wynn.229866007.workers.dev
+site_url: https://wynn.myblog-site.workers.dev
+display_url: https://wynn.myblog-site.workers.dev
 logo_url: /images/avatar.png
 
 media_folder: public/media

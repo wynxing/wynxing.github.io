@@ -4,6 +4,10 @@ A personal technical blog and project archive built with Astro, MDX, Pagefind, G
 
 ## Commands
 
+Use pnpm 10.11.1, pinned in `package.json` to match the Cloudflare build image.
+The workspace explicitly includes the root package and uses pnpm 10's
+`onlyBuiltDependencies` setting for the existing native dependency setup scripts.
+
 ```bash
 pnpm install
 pnpm dev
@@ -38,7 +42,7 @@ dependency setup scripts; no frontend framework has been added.
 The production site is configured for:
 
 ```text
-https://wynn.229866007.workers.dev
+https://wynn.myblog-site.workers.dev
 ```
 
 Deployment is handled by Cloudflare Workers Git integration. Connect the

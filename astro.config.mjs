@@ -5,7 +5,7 @@ import sitemap from '@astrojs/sitemap';
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://wynn.229866007.workers.dev',
+  site: 'https://wynn.myblog-site.workers.dev',
   integrations: [
     mdx(),
     sitemap(),
