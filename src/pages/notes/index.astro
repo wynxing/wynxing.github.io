@@ -4,22 +4,13 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import ListGrid from '../../components/ListGrid.astro';
 import PostCard from '../../components/PostCard.astro';
 import { byDateDesc } from '../../utils/content';
+const entries = byDateDesc(await getCollection('notes', ({ data }) => !data.draft));
+const tags = [...new Set(entries.flatMap(entry => entry.data.tags))].sort();
 
-const notes = byDateDesc(await getCollection('notes', ({ data }) => !data.draft));
 ---
-
-<BaseLayout title="笔记" description="短想法和摘录。" section="笔记">
+<BaseLayout title="笔记" description="短想法、摘录和学习途中的发现。" section="笔记">
   <section class="page">
-    <header class="page-header">
-      <h1>笔记</h1>
-      <p>短想法和摘录。</p>
-    </header>
-    {notes.length > 0 ? (
-      <ListGrid count={notes.length}>
-        {notes.map((entry) => <PostCard entry={entry} />)}
-      </ListGrid>
-    ) : (
-      <p class="muted">还没有笔记。</p>
-    )}
+    <header class="page-header"><span class="eyebrow">SMALL OBSERVATIONS</span><h1>笔记<span class="accent">.</span><span class="page-count">{String(entries.length).padStart(2, '0')}</span></h1><p>短想法、摘录和学习途中的发现。</p></header>
+    {entries.length > 0 ? <ListGrid count={entries.length} tags={tags}  kind="notes">{entries.map((entry, index) => <PostCard entry={entry} index={index + 1}/>)}</ListGrid> : <div class="empty-state glass"><span class="eyebrow">TO BE CONTINUED</span><h2>这里，还在慢慢积累。</h2><p>暂时没有公开的笔记。先去看看已经写下的文章。</p><a href="/blog/">浏览文章 ↗</a></div>}
   </section>
 </BaseLayout>

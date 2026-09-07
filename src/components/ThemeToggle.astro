@@ -1,21 +1,32 @@
-<button class="icon-button theme-toggle" type="button" aria-label="切换深浅主题" title="切换主题">
-  <svg class="icon-sun" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
-    <circle cx="8" cy="8" r="3" fill="none" stroke="currentColor" stroke-width="1.5"></circle>
-    <path d="M8 1.5v1.4M8 13.1v1.4M1.5 8h1.4M13.1 8h1.4M3.2 3.2l1 1M11.8 11.8l1 1M3.2 12.8l1-1M11.8 4.2l1-1" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"></path>
-  </svg>
-  <svg class="icon-moon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
-    <path d="M12.6 10.2A5.2 5.2 0 0 1 5.8 3.4 5.3 5.3 0 1 0 12.6 10.2Z" fill="none" stroke="currentColor" stroke-width="1.5"></path>
-  </svg>
-</button>
-
+<label class="theme-control">
+  <span class="sr-only">外观主题</span>
+  <select aria-label="外观主题" data-theme-select>
+    <option value="system">跟随系统</option>
+    <option value="light">浅色</option>
+    <option value="dark">深色</option>
+  </select>
+</label>
 <script>
-  const toggle = document.querySelector<HTMLButtonElement>('.theme-toggle');
-
-  toggle?.addEventListener('click', () => {
-    const current = document.documentElement.dataset.theme || 'dark';
-    const next = current === 'dark' ? 'light' : 'dark';
-    document.documentElement.dataset.theme = next;
-    localStorage.setItem('theme', next);
-    document.dispatchEvent(new CustomEvent('themechange', { detail: next }));
+  const select = document.querySelector<HTMLSelectElement>('[data-theme-select]');
+  const system = window.matchMedia('(prefers-color-scheme: dark)');
+  let preference = document.documentElement.dataset.themePreference || 'system';
+  const apply = () => {
+    const theme = preference === 'system' ? (system.matches ? 'dark' : 'light') : preference;
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.dataset.themePreference = preference;
+    if (select) select.value = preference;
+    document.dispatchEvent(new CustomEvent('themechange', { detail: theme }));
+  };
+  select?.addEventListener('change', () => {
+    preference = select.value;
+    try { localStorage.setItem('theme', preference); } catch { /* Session preference still applies. */ }
+    apply();
   });
+  system.addEventListener('change', () => { if (preference === 'system') apply(); });
+  window.addEventListener('storage', (event) => {
+    if (event.key !== 'theme' && event.key !== null) return;
+    preference = event.newValue === 'light' || event.newValue === 'dark' ? event.newValue : 'system';
+    apply();
+  });
+  apply();
 </script>

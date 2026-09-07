@@ -1,8 +1,29 @@
 ---
+import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
-import OrbitHome from '../components/OrbitHome.astro';
+import PostCard from '../components/PostCard.astro';
+import { byDateDesc } from '../utils/content';
+const posts = byDateDesc(await getCollection('blog', ({ data }) => !data.draft)).slice(0, 6);
+const notes = byDateDesc(await getCollection('notes', ({ data }) => !data.draft)).slice(0, 2);
+const projects = byDateDesc(await getCollection('projects', ({ data }) => !data.draft)).slice(0, 2);
 ---
-
 <BaseLayout>
-  <OrbitHome />
+  <div class="home container">
+    <div class="home-caption"><span class="eyebrow"><i class="status-dot"></i>一个存放想法的地方</span><span class="caption-en">A SMALL CORNER OF THE INTERNET</span></div>
+    <section class="home-hero" aria-label="介绍与最新文章">
+      <div class="intro-card glass">
+        <span class="intro-watermark" aria-hidden="true">SAVE<br/>POINT</span>
+        <div class="intro-identity"><img src="/images/avatar.png" alt="Wynn 的像素黑猫头像" width="72" height="72" fetchpriority="high"/><span class="eyebrow">HELLO, I'M WYNN</span></div>
+        <h1>写代码，<br/>也记下<span class="accent">沿途。</span></h1>
+        <p>记录构建、学习和路上的想法。<br/>把做过的事、想明白的问题，存个档。</p>
+        <a class="text-link" href="/about/">认识一下 <span aria-hidden="true">↗</span></a>
+        <span class="intro-footnote">Wynn’s Save Point · 随时回来看看</span>
+      </div>
+      {posts[0] ? <div class="latest"><span class="section-kicker">最近写下的 <span>01 / LATEST ENTRY</span></span><PostCard entry={posts[0]} featured /></div> : <div class="glass empty-state"><h2>故事，从这里开始。</h2><p>文章正在路上，先认识一下这个小站。</p><a href="/about/">关于 Wynn ↗</a></div>}
+    </section>
+    {posts.length > 1 && <section class="home-section" aria-labelledby="recent-title"><div class="section-heading"><div><span class="eyebrow">THE ARCHIVE</span><h2 id="recent-title">留下的片段<span class="accent">.</span></h2></div><a class="text-link" href="/blog/">全部文章 <span aria-hidden="true">↗</span></a></div><div class="card-grid">{posts.slice(1).map((entry, i) => <PostCard entry={entry} index={i + 2}/>)}</div></section>}
+    {projects.length > 0 && <section class="home-section" aria-labelledby="projects-title"><div class="section-heading"><h2 id="projects-title">动手做的东西</h2><a href="/projects/">全部项目 ↗</a></div><div class="card-grid">{projects.map(entry => <PostCard entry={entry}/>)}</div></section>}
+    {notes.length > 0 && <section class="home-section" aria-labelledby="notes-title"><div class="section-heading"><h2 id="notes-title">随手记下</h2><a href="/notes/">全部笔记 ↗</a></div><div class="notes-list">{notes.map(entry => <PostCard entry={entry}/>)}</div></section>}
+    <div class="home-signoff"><span class="tiny-star" aria-hidden="true">✳</span><p>想到的时候写，走过的地方留个记号。</p><span class="eyebrow">END OF THIS SAVE</span></div>
+  </div>
 </BaseLayout>

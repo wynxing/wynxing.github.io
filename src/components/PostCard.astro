@@ -1,26 +1,15 @@
 ---
-import type { CollectionEntry } from 'astro:content';
-import { entryHref, formatDate } from '../utils/content';
-
-type Entry = CollectionEntry<'blog'> | CollectionEntry<'notes'> | CollectionEntry<'projects'>;
-
-interface Props {
-  entry: Entry;
-}
-
-const glyphs = {
-  blog: '/images/glyph-blog.png',
-  notes: '/images/glyph-notes.png',
-  projects: '/images/glyph-projects.png',
-} as const;
-
-const { entry } = Astro.props;
+import { entryHref, formatDate, readingTime, categoryLabel, statusLabel, type Entry } from '../utils/content';
+interface Props { entry: Entry; featured?: boolean; index?: number; }
+const { entry, featured = false, index = 1 } = Astro.props;
+const category = 'category' in entry.data ? entry.data.category : '';
 ---
-
-<article class="index-row" data-pagefind-ignore data-tags={entry.data.tags.join(',')}>
-  <a href={entryHref(entry)}>
-    <img class="index-glyph" src={glyphs[entry.collection]} alt="" width="32" height="32" />
-    <h2>{entry.data.title}</h2>
-    <time datetime={entry.data.date.toISOString()}>{formatDate(entry.data.date)}</time>
-  </a>
+<article class:list={['post-card', 'glass', { featured, 'note-card': entry.collection === 'notes' }]} data-pagefind-ignore data-entry-card data-tags={JSON.stringify(entry.data.tags)} data-category={category}>
+  <div class="card-top"><span class="eyebrow"><i class="status-dot"></i>{category ? categoryLabel(category) : entry.collection === 'notes' ? '随手记' : '项目记录'}</span><span class="card-number" aria-hidden="true">{String(index).padStart(2, '0')}</span></div>
+  <h2><a class="card-link" href={entryHref(entry)}>{entry.data.title}</a></h2>
+  <p class="card-description">{entry.data.description}</p>
+  {'status' in entry.data && <p class="project-status">{statusLabel(entry.data.status)}{entry.data.stack.length > 0 && <> · {entry.data.stack.join(' / ')}</>}</p>}
+  <div class="card-bottom"><span><time datetime={entry.data.date.toISOString()}>{formatDate(entry.data.date)}</time><span class="meta-separator">/</span>{readingTime(entry.body)}</span><span class="card-arrow" aria-hidden="true">↗</span></div>
+  {'repo' in entry.data && entry.data.repo && <a class="card-extra" href={entry.data.repo} target="_blank" rel="noreferrer">仓库 ↗</a>}
+  {'demo' in entry.data && entry.data.demo && <a class="card-extra" href={entry.data.demo} target="_blank" rel="noreferrer">演示 ↗</a>}
 </article>

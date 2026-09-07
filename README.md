@@ -9,10 +9,29 @@ pnpm install
 pnpm dev
 pnpm check
 pnpm build
+pnpm test
 pnpm preview
 pnpm worker:dev
 pnpm deploy
 ```
+
+## Appearance and reading
+
+The public site uses mint accents and frosted surfaces in both light and dark
+mode. The default follows the system appearance and responds to system changes.
+The appearance selector also supports explicit light/dark choices, stored in the
+existing `theme` local-storage key. Existing choices are preserved.
+
+The homepage shows the six latest published articles without duplication, plus
+up to two notes/projects when those collections contain published entries.
+List filters use `?category=Thoughts&tag=Architecture`; category and tag are
+combined, and browser history restores the selection. Existing content URLs,
+CMS fields, RSS, and Giscus pathname mappings are unchanged.
+
+After `pnpm build`, run `pnpm test` for theme/filter behavior and generated link
+checks. `pnpm preview` includes the generated Pagefind search index. The pnpm
+workspace configuration allows the existing esbuild, sharp, and workerd native
+dependency setup scripts; no frontend framework has been added.
 
 ## Deployment
 

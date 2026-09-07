@@ -1,7 +1,8 @@
 ---
 import '../styles/global.css';
 import { SITE_DESCRIPTION, SITE_TITLE, cloudflareAnalyticsToken } from '../consts';
-import EdgeTools from '../components/EdgeTools.astro';
+import SiteNav from '../components/SiteNav.astro';
+import { githubProfileUrl } from '../consts';
 
 interface Props {
   title?: string;
@@ -15,7 +16,6 @@ const {
   title = SITE_TITLE,
   description = SITE_DESCRIPTION,
   image = '/og.png',
-  section,
   showProgress = false,
 } = Astro.props;
 const canonical = new URL(Astro.url.pathname, Astro.site);
@@ -36,15 +36,6 @@ const isHome = pathname === '/' || pathname === '';
     <link rel="canonical" href={canonical} />
     <link rel="preload" href="/fonts/outfit-latin-wght.woff2" as="font" type="font/woff2" crossorigin />
     {isHome && <link rel="preload" href="/images/avatar.png" as="image" />}
-    {isHome && (
-      <link
-        rel="preload"
-        href="/fonts/source-serif-4-latin-wght-italic.woff2"
-        as="font"
-        type="font/woff2"
-        crossorigin
-      />
-    )}
     <link rel="stylesheet" href="/fonts/fonts.css" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" href="/favicon.ico" />
@@ -59,8 +50,17 @@ const isHome = pathname === '/' || pathname === '';
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:image" content={new URL(image, Astro.site)} />
     <script is:inline>
-      const savedTheme = localStorage.getItem('theme');
-      document.documentElement.dataset.theme = savedTheme === 'light' ? 'light' : 'dark';
+      (() => {
+        let preference = 'system';
+        try {
+          const saved = localStorage.getItem('theme');
+          if (saved === 'light' || saved === 'dark') preference = saved;
+        } catch {}
+        document.documentElement.dataset.themePreference = preference;
+        document.documentElement.dataset.theme = preference === 'system'
+          ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+          : preference;
+      })();
     </script>
     {isProd && (
       <script
@@ -76,24 +76,14 @@ const isHome = pathname === '/' || pathname === '';
     {showProgress && (
       <div class="reading-progress" aria-hidden="true"><span></span></div>
     )}
-    {isHome ? (
-      <EdgeTools fixed />
-    ) : (
-      <header class="shell-bar">
-        <a class="shell-home" href="/" aria-label={SITE_TITLE}>
-          <img src="/images/avatar.png" alt="" width="28" height="28" />
-        </a>
-        {section && <p class="shell-section">{section}</p>}
-        <EdgeTools />
-      </header>
-    )}
-    <main id="content">
+    <SiteNav />
+    <main id="content" tabindex="-1">
       <slot />
     </main>
-    {!isHome && (
-      <footer class="shell-foot">
-        <a href="/rss.xml">RSS</a>
-      </footer>
-    )}
+    <footer class="site-footer container">
+      <div><a class="footer-name" href="/">Wynn’s Save Point<span class="brand-dot">.</span></a><p>记录构建、学习和路上的想法。</p></div>
+      <nav aria-label="页脚导航"><a href={githubProfileUrl} target="_blank" rel="noreferrer">GitHub ↗</a><a href="/rss.xml">RSS ↗</a><a href="/admin/">写作后台</a></nav>
+      <span class="copyright">© {new Date().getFullYear()} Wynn</span>
+    </footer>
   </body>
 </html>

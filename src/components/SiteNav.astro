@@ -1,0 +1,26 @@
+---
+import ThemeToggle from './ThemeToggle.astro';
+import { isCurrentPath } from '../utils/content';
+const links = [['/blog/', '文章'], ['/notes/', '笔记'], ['/projects/', '项目'], ['/about/', '关于']];
+---
+<header class="site-header container">
+  <div class="nav-shell glass">
+    <a class="brand" href="/" aria-label="Wynn's Save Point 首页">
+      <img src="/images/avatar.png" alt="" width="34" height="34" />
+      <span>Wynn<span class="brand-suffix">’s Save Point</span><span class="brand-dot">.</span></span>
+    </a>
+    <nav class="desktop-nav" aria-label="主导航">
+      {links.map(([href, label]) => <a href={href} aria-current={isCurrentPath(Astro.url.pathname, href) ? 'page' : undefined}>{label}</a>)}
+    </nav>
+    <div class="nav-tools">
+      <a class="search-link" href="/search/" aria-label="搜索" aria-current={isCurrentPath(Astro.url.pathname, '/search/') ? 'page' : undefined}>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg>
+      </a>
+      <ThemeToggle />
+      <details class="mobile-nav">
+        <summary aria-label="导航菜单"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></summary>
+        <nav aria-label="移动端导航">{links.map(([href, label]) => <a href={href} aria-current={isCurrentPath(Astro.url.pathname, href) ? 'page' : undefined}>{label}</a>)}</nav>
+      </details>
+    </div>
+  </div>
+</header>

@@ -1,18 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 ---
-
-<BaseLayout title="没有找到" description="没有这篇内容。" section="迷失">
-  <section class="page">
-    <header class="page-header">
-      <h1>没有这篇</h1>
-      <p>地址可能写错了，或者内容已经挪走。</p>
-    </header>
-    <ul class="missing-links">
-      <li><a href="/">回轨道</a></li>
-      <li><a href="/blog/">看文章</a></li>
-      <li><a href="/projects/">看项目</a></li>
-      <li><a href="/search/">搜索</a></li>
-    </ul>
-  </section>
+<BaseLayout title="没有找到" description="地址可能写错了，或者内容已经挪走。" section="迷失">
+  <section class="page missing-page"><span class="missing-number" aria-hidden="true">404</span><div class="glass empty-state"><span class="eyebrow">SAVE POINT NOT FOUND</span><h1>这段路，还没有存档。</h1><p>地址可能写错了，或者内容已经挪走。</p><nav class="missing-links" aria-label="继续浏览"><a href="/">回首页 ↗</a><a href="/blog/">看文章 ↗</a><a href="/search/">搜索 ↗</a></nav></div></section>
 </BaseLayout>

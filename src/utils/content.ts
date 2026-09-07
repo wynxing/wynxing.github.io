@@ -43,6 +43,14 @@ export function readingTime(body = '') {
   return `${minutes} 分钟`;
 }
 
+export function categoryLabel(category: string) {
+  return ({ Tech: '技术', Projects: '项目', Thoughts: '思考', Learning: '学习' } as Record<string, string>)[category] ?? category;
+}
+
+export function statusLabel(status: string) {
+  return ({ building: '进行中', paused: '已暂停', shipped: '已发布', archived: '已归档' } as Record<string, string>)[status] ?? status;
+}
+
 export function isCurrentPath(pathname: string, href: string) {
   if (href === '/') {
     return pathname === '/' || pathname === '';

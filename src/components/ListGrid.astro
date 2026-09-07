@@ -1,46 +1,66 @@
 ---
-interface Props {
-  count: number;
-}
-
-const { count } = Astro.props;
-const clearHref = Astro.url.pathname;
+import { categoryLabel } from '../utils/content';
+interface Props { count: number; tags?: string[]; categories?: string[]; kind?: string; }
+const { count, tags = [], categories = [], kind = 'blog' } = Astro.props;
 ---
-
-<div class="list-toolbar" data-tag-toolbar hidden>
-  <p>
-    标签 <span data-tag-name></span>
-  </p>
-  <a href={clearHref}>清除筛选</a>
+<div data-list>
+  <form class="list-toolbar glass" data-filters hidden>
+    {categories.length > 0 && <label>分类<select name="category" aria-label="文章分类"><option value="">全部分类</option>{categories.map(category => <option value={category}>{categoryLabel(category)}</option>)}</select></label>}
+    <label>标签<select name="tag" aria-label="标签"><option value="">全部标签</option>{tags.map(tag => <option value={tag}>{tag}</option>)}</select></label>
+    <p class="result-count" role="status" aria-live="polite"><span data-visible-count>{count}</span> 条记录</p>
+    <a href={Astro.url.pathname} data-clear>清除筛选</a>
+  </form>
+  <div class:list={[kind === 'notes' ? 'notes-list' : 'card-grid']} data-card-grid><slot /></div>
+  <div class="empty-state glass" data-tag-empty hidden><h2>这一页，暂时留白。</h2><p>没有符合筛选条件的内容，换个标签看看。</p><a href={Astro.url.pathname} data-clear>查看全部 ↗</a></div>
 </div>
-<div class="index-list" data-card-grid data-count={count}>
-  <slot />
-</div>
-<p class="muted" data-tag-empty hidden>没有带这个标签的文章。</p>
-
 <script>
-  const params = new URLSearchParams(window.location.search);
-  const tag = params.get('tag');
-  const toolbar = document.querySelector<HTMLElement>('[data-tag-toolbar]');
-  const label = document.querySelector<HTMLElement>('[data-tag-name]');
-  const empty = document.querySelector<HTMLElement>('[data-tag-empty]');
-  const grid = document.querySelector<HTMLElement>('[data-card-grid]');
-
-  if (tag && toolbar && label && grid) {
-    toolbar.hidden = false;
-    label.textContent = tag;
-
-    const cards = [...grid.querySelectorAll<HTMLElement>('[data-tags]')];
-    let visible = 0;
-
-    for (const card of cards) {
-      const tags = (card.dataset.tags ?? '').split(',').filter(Boolean);
-      const match = tags.includes(tag);
-      card.hidden = !match;
-      if (match) visible += 1;
-    }
-
-    grid.dataset.count = String(visible);
-    if (empty) empty.hidden = visible > 0;
-  }
+  document.querySelectorAll<HTMLElement>('[data-list]').forEach(root => {
+    const form = root.querySelector<HTMLFormElement>('[data-filters]')!;
+    const tagSelect = form.querySelector<HTMLSelectElement>('[name="tag"]')!;
+    const categorySelect = form.querySelector<HTMLSelectElement>('[name="category"]');
+    const cards = [...root.querySelectorAll<HTMLElement>('[data-entry-card]')];
+    const syncSelect = (select: HTMLSelectElement | null, value: string) => {
+      if (!select) return;
+      select.querySelector('[data-unknown]')?.remove();
+      if (value && ![...select.options].some(option => option.value === value)) {
+        const option = new Option(value, value);
+        option.dataset.unknown = '';
+        select.add(option);
+      }
+      select.value = value;
+    };
+    const apply = () => {
+      const params = new URLSearchParams(location.search);
+      const tag = params.get('tag') || '';
+      const category = params.get('category') || '';
+      syncSelect(tagSelect, tag);
+      syncSelect(categorySelect, category);
+      let count = 0;
+      cards.forEach(card => {
+        const tags: string[] = JSON.parse(card.dataset.tags || '[]');
+        card.hidden = Boolean((tag && !tags.includes(tag)) || (categorySelect && category && card.dataset.category !== category));
+        if (!card.hidden) count++;
+      });
+      root.querySelector('[data-visible-count]')!.textContent = String(count);
+      root.querySelector<HTMLElement>('[data-tag-empty]')!.hidden = count > 0;
+    };
+    form.hidden = false;
+    form.addEventListener('submit', event => event.preventDefault());
+    form.addEventListener('change', () => {
+      const url = new URL(location.href);
+      for (const [key, value] of [['tag', tagSelect.value], ['category', categorySelect?.value || '']]) {
+        if (value) url.searchParams.set(key, value); else url.searchParams.delete(key);
+      }
+      history.pushState(null, '', url);
+      apply();
+    });
+    root.querySelectorAll<HTMLAnchorElement>('[data-clear]').forEach(link => link.addEventListener('click', event => {
+      if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+      event.preventDefault();
+      history.pushState(null, '', link.href);
+      apply();
+    }));
+    window.addEventListener('popstate', apply);
+    apply();
+  });
 </script>
