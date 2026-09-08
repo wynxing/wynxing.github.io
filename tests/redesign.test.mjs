@@ -170,3 +170,15 @@ test('tag filtering preserves commas and combines category with tag', () => {
   assert.equal(empty.hidden, false);
   assert.equal(tag.value, 'absent');
 });
+
+test('editorial homepage has one latest entry and unique published article destinations', () => {
+  const html = read('dist/index.html');
+  const links = [...html.matchAll(/class="card-link" href="([^"]+)"/g)].map(match => match[1]).filter(href => href.startsWith('/blog/'));
+  assert.ok(links.length > 0 && links.length <= 6);
+  assert.equal(new Set(links).size, links.length);
+  assert.equal((html.match(/post-featured/g) || []).length, 1);
+  assert.ok(html.includes('post-list'));
+  for (const href of links) {
+    assert.ok(existsSync(resolve(root, 'dist', '.' + href, 'index.html')));
+  }
+});

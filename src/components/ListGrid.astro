@@ -10,7 +10,7 @@ const { count, tags = [], categories = [], kind = 'blog' } = Astro.props;
     <p class="result-count" role="status" aria-live="polite"><span data-visible-count>{count}</span> 条记录</p>
     <a href={Astro.url.pathname} data-clear>清除筛选</a>
   </form>
-  <div class:list={[kind === 'notes' ? 'notes-list' : 'card-grid']} data-card-grid><slot /></div>
+  <div class:list={[kind === 'projects' ? 'project-grid' : 'archive-list']} data-card-grid><slot /></div>
   <div class="empty-state glass" data-tag-empty hidden><h2>这一页，暂时留白。</h2><p>没有符合筛选条件的内容，换个标签看看。</p><a href={Astro.url.pathname} data-clear>查看全部 ↗</a></div>
 </div>
 <script>

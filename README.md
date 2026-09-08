@@ -21,8 +21,10 @@ pnpm deploy
 
 ## Appearance and reading
 
-The public site uses mint accents and frosted surfaces in both light and dark
-mode. The default follows the system appearance and responds to system changes.
+The public site uses a mint editorial design: oversized homepage typography, a
+black-cat save-point cover, and numbered article rows. Frosted surfaces are
+reserved for navigation; reading pages use quiet, solid surfaces in light and dark
+mode. The responsive layout and entry animations respect reduced-motion settings. The default follows the system appearance and responds to system changes.
 The appearance selector also supports explicit light/dark choices, stored in the
 existing `theme` local-storage key. Existing choices are preserved.
 

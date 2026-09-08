@@ -1,15 +1,20 @@
 ---
 import { entryHref, formatDate, readingTime, categoryLabel, statusLabel, type Entry } from '../utils/content';
-interface Props { entry: Entry; featured?: boolean; index?: number; }
-const { entry, featured = false, index = 1 } = Astro.props;
+interface Props { entry: Entry; variant?: 'featured' | 'list' | 'project'; index?: number; }
+const { entry, variant = entry.collection === 'projects' ? 'project' : 'list', index = 1 } = Astro.props;
 const category = 'category' in entry.data ? entry.data.category : '';
 ---
-<article class:list={['post-card', 'glass', { featured, 'note-card': entry.collection === 'notes' }]} data-pagefind-ignore data-entry-card data-tags={JSON.stringify(entry.data.tags)} data-category={category}>
-  <div class="card-top"><span class="eyebrow"><i class="status-dot"></i>{category ? categoryLabel(category) : entry.collection === 'notes' ? '随手记' : '项目记录'}</span><span class="card-number" aria-hidden="true">{String(index).padStart(2, '0')}</span></div>
-  <h2><a class="card-link" href={entryHref(entry)}>{entry.data.title}</a></h2>
-  <p class="card-description">{entry.data.description}</p>
-  {'status' in entry.data && <p class="project-status">{statusLabel(entry.data.status)}{entry.data.stack.length > 0 && <> · {entry.data.stack.join(' / ')}</>}</p>}
-  <div class="card-bottom"><span><time datetime={entry.data.date.toISOString()}>{formatDate(entry.data.date)}</time><span class="meta-separator">/</span>{readingTime(entry.body)}</span><span class="card-arrow" aria-hidden="true">↗</span></div>
-  {'repo' in entry.data && entry.data.repo && <a class="card-extra" href={entry.data.repo} target="_blank" rel="noreferrer">仓库 ↗</a>}
-  {'demo' in entry.data && entry.data.demo && <a class="card-extra" href={entry.data.demo} target="_blank" rel="noreferrer">演示 ↗</a>}
+<article class:list={['post-card', `post-${variant}`]} data-pagefind-ignore data-entry-card data-tags={JSON.stringify(entry.data.tags)} data-category={category}>
+  <div class="card-index"><span class="card-number" aria-hidden="true">{String(index).padStart(2, '0')}</span><span class="eyebrow">{variant === 'featured' ? '最近写下的' : '存档记录'}</span>{variant === 'featured' && <span class="entry-label">LATEST ENTRY</span>}</div>
+  <div class="card-content">
+    <div class="card-meta"><span class="card-category">{category ? categoryLabel(category) : entry.collection === 'notes' ? '随手记' : '项目记录'}</span><time datetime={entry.data.date.toISOString()}>{formatDate(entry.data.date)}</time><span>{readingTime(entry.body)}</span></div>
+    <h2><a class="card-link" href={entryHref(entry)}>{entry.data.title}</a></h2>
+    <p class="card-description">{entry.data.description}</p>
+    {'status' in entry.data && <p class="project-status">{statusLabel(entry.data.status)}{entry.data.stack.length > 0 && <> · {entry.data.stack.join(' / ')}</>}</p>}
+    {(('repo' in entry.data && entry.data.repo) || ('demo' in entry.data && entry.data.demo)) && <div class="card-extras">
+      {'repo' in entry.data && entry.data.repo && <a class="card-extra" href={entry.data.repo} target="_blank" rel="noreferrer">仓库 ↗</a>}
+      {'demo' in entry.data && entry.data.demo && <a class="card-extra" href={entry.data.demo} target="_blank" rel="noreferrer">演示 ↗</a>}
+    </div>}
+  </div>
+  <span class="card-arrow" aria-hidden="true">↗</span>
 </article>
