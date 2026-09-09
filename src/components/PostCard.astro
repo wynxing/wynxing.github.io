@@ -1,11 +1,11 @@
 ---
 import { entryHref, formatDate, readingTime, categoryLabel, statusLabel, type Entry } from '../utils/content';
-interface Props { entry: Entry; variant?: 'featured' | 'list' | 'project'; index?: number; }
-const { entry, variant = entry.collection === 'projects' ? 'project' : 'list', index = 1 } = Astro.props;
+interface Props { entry: Entry; variant?: 'list' | 'project'; }
+const { entry, variant = entry.collection === 'projects' ? 'project' : 'list' } = Astro.props;
 const category = 'category' in entry.data ? entry.data.category : '';
 ---
 <article class:list={['post-card', `post-${variant}`]} data-pagefind-ignore data-entry-card data-tags={JSON.stringify(entry.data.tags)} data-category={category}>
-  <div class="card-index"><span class="card-number" aria-hidden="true">{String(index).padStart(2, '0')}</span><span class="eyebrow">{variant === 'featured' ? '最近写下的' : '存档记录'}</span>{variant === 'featured' && <span class="entry-label">LATEST ENTRY</span>}</div>
+
   <div class="card-content">
     <div class="card-meta"><span class="card-category">{category ? categoryLabel(category) : entry.collection === 'notes' ? '随手记' : '项目记录'}</span><time datetime={entry.data.date.toISOString()}>{formatDate(entry.data.date)}</time><span>{readingTime(entry.body)}</span></div>
     <h2><a class="card-link" href={entryHref(entry)}>{entry.data.title}</a></h2>

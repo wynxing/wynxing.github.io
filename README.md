@@ -21,15 +21,17 @@ pnpm deploy
 
 ## Appearance and reading
 
-The public site uses a mint editorial design: oversized homepage typography, a
-black-cat save-point cover, and numbered article rows. Frosted surfaces are
-reserved for navigation; reading pages use quiet, solid surfaces in light and dark
-mode. The responsive layout and entry animations respect reduced-motion settings. The default follows the system appearance and responds to system changes.
-The appearance selector also supports explicit light/dark choices, stored in the
-existing `theme` local-storage key. Existing choices are preserved.
+The homepage is a responsive mint glass space with four organic navigation
+portals. All sections remain accessible even when their collections are empty;
+a single latest-article link is shown beside the articles portal. Article lists,
+search, and supporting pages share soft surfaces, while the reading area stays
+still and legible. Pointer highlights run only for a fine mouse pointer, and
+reduced-motion preferences disable the ambient and entry animations. Native
+cross-document transitions progressively enhance ordinary links without delays.
 
-The homepage shows the six latest published articles without duplication, plus
-up to two notes/projects when those collections contain published entries.
+The default appearance follows the system and responds to system changes.
+Explicit light/dark choices use the existing `theme` local-storage key.
+
 List filters use `?category=Thoughts&tag=Architecture`; category and tag are
 combined, and browser history restores the selection. Existing content URLs,
 CMS fields, RSS, and Giscus pathname mappings are unchanged.

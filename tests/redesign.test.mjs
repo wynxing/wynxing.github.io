@@ -171,14 +171,55 @@ test('tag filtering preserves commas and combines category with tag', () => {
   assert.equal(tag.value, 'absent');
 });
 
-test('editorial homepage has one latest entry and unique published article destinations', () => {
+test('glass homepage keeps all destinations and only one newest article preview', () => {
   const html = read('dist/index.html');
-  const links = [...html.matchAll(/class="card-link" href="([^"]+)"/g)].map(match => match[1]).filter(href => href.startsWith('/blog/'));
-  assert.ok(links.length > 0 && links.length <= 6);
-  assert.equal(new Set(links).size, links.length);
-  assert.equal((html.match(/post-featured/g) || []).length, 1);
-  assert.ok(html.includes('post-list'));
-  for (const href of links) {
-    assert.ok(existsSync(resolve(root, 'dist', '.' + href, 'index.html')));
-  }
+  const destinations = [...html.matchAll(/href="([^"]+)" data-portal="([^"]+)"/g)];
+  assert.deepEqual(destinations.map(match => [match[2], match[1]]), [
+    ['articles', '/blog/'], ['projects', '/projects/'], ['notes', '/notes/'], ['about', '/about/'],
+  ]);
+  for (const [, href] of destinations) assert.ok(existsSync(resolve(root, 'dist', '.' + href, 'index.html')));
+  const preview = [...html.matchAll(/data-latest-entry href="([^"]+)"/g)];
+  assert.equal(preview.length, 1);
+  assert.ok(existsSync(resolve(root, 'dist', '.' + preview[0][1], 'index.html')));
+  assert.equal((html.match(/data-entry-card/g) || []).length, 0);
+  assert.ok(html.includes('aria-describedby="projects-description"'));
+  assert.ok(html.includes('aria-describedby="notes-description"'));
+});
+
+test('glass pointer effects coalesce frames and stop for touch, reduced motion and hidden pages', () => {
+  const source = ts.transpile(read('src/components/GlassScene.astro').match(/<script>([\s\S]*?)<\/script>/)[1], { target: ts.ScriptTarget.ES2022 });
+  const handlers = {}, documentEvents = {}, mediaEvents = {}, props = new Map(), frames = new Map();
+  let sequence = 0;
+  const reduced = { matches: false, addEventListener: (_, fn) => { mediaEvents.reduced = fn; } };
+  const fine = { matches: true, addEventListener: (_, fn) => { mediaEvents.fine = fn; } };
+  const portal = {
+    style: { setProperty: (key, value) => props.set(key, value), removeProperty: key => props.delete(key) },
+    addEventListener: (name, fn) => { handlers[name] = fn; },
+    getBoundingClientRect: () => ({ left: 0, top: 0, width: 200, height: 100 }),
+  };
+  let paused = false;
+  const world = { querySelectorAll: () => [portal], classList: { toggle: (_, value) => { paused = value; } } };
+  const document = { hidden: false, querySelector: () => world, addEventListener: (name, fn) => { documentEvents[name] = fn; } };
+  runInNewContext(source, {
+    document, window: { addEventListener() {} },
+    matchMedia: query => query.includes('reduced-motion') ? reduced : fine,
+    requestAnimationFrame: fn => { const id = ++sequence; frames.set(id, fn); return id; },
+    cancelAnimationFrame: id => frames.delete(id),
+  });
+  const move = (pointerType = 'mouse') => handlers.pointermove({ pointerType, clientX: 200, clientY: 100 });
+  move('touch'); assert.equal(frames.size, 0);
+  move(); move(); assert.equal(frames.size, 1);
+  const paint = frames.values().next().value; frames.clear(); paint();
+  assert.equal(props.get('--dx'), '4px');
+  assert.equal(props.get('--dy'), '4px');
+  assert.equal(props.get('--rx'), '-2.5deg');
+  reduced.matches = true; mediaEvents.reduced();
+  assert.equal(props.size, 0); assert.equal(paused, true);
+  move(); assert.equal(frames.size, 0);
+  reduced.matches = false; mediaEvents.reduced();
+  move(); assert.equal(frames.size, 1);
+  document.hidden = true; documentEvents.visibilitychange();
+  assert.equal(frames.size, 0); assert.equal(paused, true);
+  document.hidden = false; documentEvents.visibilitychange();
+  fine.matches = false; mediaEvents.fine(); move(); assert.equal(frames.size, 0);
 });

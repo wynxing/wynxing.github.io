@@ -1,9 +1,10 @@
 ---
 import ThemeToggle from './ThemeToggle.astro';
 import { isCurrentPath } from '../utils/content';
+const home = Astro.url.pathname === '/';
 const links = [['/blog/', '文章'], ['/notes/', '笔记'], ['/projects/', '项目'], ['/about/', '关于']];
 ---
-<header class="site-header container">
+<header class:list={["site-header", "container", { "home-header": home }]}>
   <div class="nav-shell glass">
     <a class="brand" href="/" aria-label="Wynn's Save Point 首页">
       <img src="/images/avatar.png" alt="" width="34" height="34" />

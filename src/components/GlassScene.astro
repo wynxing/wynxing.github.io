@@ -1,0 +1,70 @@
+---
+import GlassPortal from './GlassPortal.astro';
+interface Props { articleCount: number; projectCount: number; noteCount: number; latest?: { title: string; href: string; date: string; datetime: string }; }
+const { articleCount, projectCount, noteCount, latest } = Astro.props;
+---
+<div class="glass-world" data-glass-world>
+  <div class="ambient-light" aria-hidden="true"><span></span><span></span><span></span></div>
+  <section class="glass-scene container" aria-labelledby="scene-title">
+    <header class="scene-identity"><span class="scene-greeting">你好，我是 Wynn</span><h1 id="scene-title">Wynn’s Save Point<span>.</span></h1><p>写代码，也记下沿途。</p></header>
+    <GlassPortal id="articles" shape="lens" href="/blog/" title="文章" description="技术、复盘与思考" detail={articleCount ? `${articleCount} 篇记录 · 进入阅读` : '正在积累 · 去看看'}/>
+    <GlassPortal id="projects" shape="pebble" href="/projects/" title="项目" description="把想法做出来" detail={projectCount ? `${projectCount} 个项目 · 去探索` : '正在积累 · 去看看'}/>
+    <GlassPortal id="notes" shape="drop" href="/notes/" title="笔记" description="零散的发现" detail={noteCount ? `${noteCount} 条笔记 · 随便翻翻` : '正在积累 · 去看看'}/>
+    <GlassPortal id="about" shape="oval" href="/about/" title="关于 Wynn" description="这个小站背后的人" detail="认识一下"/>
+    {latest && <aside class="scene-latest" aria-label="最近写下的"><span class="latest-label">最近写下 <time datetime={latest.datetime}>{latest.date}</time></span><a data-latest-entry href={latest.href}>{latest.title}<span aria-hidden="true"> ↗</span></a></aside>}
+    <div class="scene-cat"><span class="cat-medallion"><img src="/images/avatar.png" alt="Wynn 的像素黑猫" width="56" height="56"/></span><span>随时回来，继续探索。</span></div>
+  </section>
+</div>
+<script>
+  const world = document.querySelector<HTMLElement>('[data-glass-world]');
+  if (world) {
+    const portals = [...world.querySelectorAll<HTMLAnchorElement>('[data-portal]')];
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+    const fine = matchMedia('(hover: hover) and (pointer: fine)');
+    let frame = 0;
+    let active: HTMLAnchorElement | null = null;
+    let point: { x: number; y: number } | null = null;
+    const reset = () => {
+      cancelAnimationFrame(frame);
+      frame = 0;
+      point = null;
+      active = null;
+      portals.forEach(portal => {
+        ['--rx', '--ry', '--dx', '--dy', '--px', '--py'].forEach(name => portal.style.removeProperty(name));
+      });
+    };
+    const available = () => !reduced.matches && fine.matches && !document.hidden;
+    const paint = () => {
+      frame = 0;
+      if (!active || !point || !available()) return;
+      const rect = active.getBoundingClientRect();
+      const x = Math.max(-1, Math.min(1, (point.x - rect.left) / rect.width * 2 - 1));
+      const y = Math.max(-1, Math.min(1, (point.y - rect.top) / rect.height * 2 - 1));
+      active.style.setProperty('--rx', `${-y * 2.5}deg`);
+      active.style.setProperty('--ry', `${x * 2.5}deg`);
+      active.style.setProperty('--dx', `${x * 4}px`);
+      active.style.setProperty('--dy', `${y * 4}px`);
+      active.style.setProperty('--px', `${(x + 1) * 50}%`);
+      active.style.setProperty('--py', `${(y + 1) * 50}%`);
+    };
+    portals.forEach(portal => {
+      portal.addEventListener('pointermove', event => {
+        if (!available() || event.pointerType !== 'mouse') return;
+        active = portal;
+        point = { x: event.clientX, y: event.clientY };
+        if (!frame) frame = requestAnimationFrame(paint);
+      });
+      portal.addEventListener('pointerleave', reset);
+      portal.addEventListener('blur', reset);
+    });
+    const sync = () => {
+      world.classList.toggle('scene-paused', document.hidden || reduced.matches);
+      if (!available()) reset();
+    };
+    document.addEventListener('visibilitychange', sync);
+    reduced.addEventListener('change', sync);
+    fine.addEventListener('change', sync);
+    window.addEventListener('pagehide', reset);
+    sync();
+  }
+</script>

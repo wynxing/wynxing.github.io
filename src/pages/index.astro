@@ -1,34 +1,14 @@
 ---
 import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
-import PostCard from '../components/PostCard.astro';
-import { byDateDesc } from '../utils/content';
-const posts = byDateDesc(await getCollection('blog', ({ data }) => !data.draft)).slice(0, 6);
-const notes = byDateDesc(await getCollection('notes', ({ data }) => !data.draft)).slice(0, 2);
-const projects = byDateDesc(await getCollection('projects', ({ data }) => !data.draft)).slice(0, 2);
+import GlassScene from '../components/GlassScene.astro';
+import { byDateDesc, entryHref, formatDate } from '../utils/content';
+const posts = byDateDesc(await getCollection('blog', ({ data }) => !data.draft));
+const projects = await getCollection('projects', ({ data }) => !data.draft);
+const notes = await getCollection('notes', ({ data }) => !data.draft);
+const newest = posts[0];
+const latest = newest ? { title: newest.data.title, href: entryHref(newest), date: formatDate(newest.data.date), datetime: newest.data.date.toISOString() } : undefined;
 ---
 <BaseLayout>
-  <div class="home container">
-    <div class="home-caption"><span class="eyebrow"><i class="status-dot"></i>一个存放想法的地方</span><span class="caption-en">CODE, THOUGHTS & THINGS IN BETWEEN</span></div>
-    <section class="home-hero" aria-labelledby="home-title">
-      <div class="hero-copy">
-        <span class="eyebrow hero-hello">你好，我是 Wynn。</span>
-        <h1 id="home-title">写代码，<br/>也记下<span class="accent">沿途<span class="hero-period">。</span></span></h1>
-        <div class="hero-bottom"><p>记录构建、学习和路上的想法。<br/>把做过的事、想明白的问题，存个档。</p><a class="hero-cta" href="/about/">认识一下<span aria-hidden="true">↗</span></a></div>
-      </div>
-      <div class="hero-art" aria-label="Wynn 的黑猫存档点">
-        <div class="art-top"><span>个人存档 / 001</span><span aria-hidden="true">＋</span></div>
-        <span class="art-word" aria-hidden="true">SAVE<br/>POINT<span>.</span></span>
-        <img class="hero-cat" src="/images/avatar.png" alt="Wynn 的像素黑猫，歪着头看向你" width="460" height="460" fetchpriority="high"/>
-        <div class="art-bottom"><span><i class="status-dot"></i> 想法在这里着陆</span><span aria-hidden="true">[ W. ]</span></div>
-      </div>
-    </section>
-    <section class="latest" aria-label="最近写下的">
-      {posts[0] ? <PostCard entry={posts[0]} variant="featured" /> : <div class="empty-state"><h2>故事，从这里开始。</h2><p>文章正在路上，先认识一下这个小站。</p><a href="/about/">关于 Wynn ↗</a></div>}
-    </section>
-    {posts.length > 1 && <section class="home-section" aria-labelledby="recent-title"><div class="section-heading"><div><span class="eyebrow">01 / THE ARCHIVE</span><h2 id="recent-title">留下的片段<span class="accent">.</span></h2></div><a class="text-link" href="/blog/">全部文章 <span aria-hidden="true">↗</span></a></div><div class="archive-list">{posts.slice(1).map((entry, i) => <PostCard entry={entry} index={i + 2}/>)}</div></section>}
-    {projects.length > 0 && <section class="home-section" aria-labelledby="projects-title"><div class="section-heading"><h2 id="projects-title">动手做的东西</h2><a href="/projects/">全部项目 ↗</a></div><div class="project-grid">{projects.map((entry, i) => <PostCard entry={entry} index={i + 1} variant="project"/>)}</div></section>}
-    {notes.length > 0 && <section class="home-section" aria-labelledby="notes-title"><div class="section-heading"><h2 id="notes-title">随手记下</h2><a href="/notes/">全部笔记 ↗</a></div><div class="archive-list">{notes.map((entry, i) => <PostCard entry={entry} index={i + 1}/>)}</div></section>}
-    <div class="home-signoff"><span class="signoff-word" aria-hidden="true">TO BE CONTINUED<span>.</span></span><div><p>想到的时候写，走过的地方留个记号。</p><span class="eyebrow">这一站，先存到这里。</span></div></div>
-  </div>
+  <GlassScene articleCount={posts.length} projectCount={projects.length} noteCount={notes.length} latest={latest}/>
 </BaseLayout>

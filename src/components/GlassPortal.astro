@@ -1,0 +1,15 @@
+---
+interface Props {
+  id: 'articles' | 'projects' | 'notes' | 'about';
+  href: string;
+  title: string;
+  description: string;
+  detail: string;
+  shape: 'lens' | 'pebble' | 'drop' | 'oval';
+}
+const { id, href, title, description, detail, shape } = Astro.props;
+---
+<a class:list={['glass-portal', `portal-${id}`, `shape-${shape}`]} href={href} data-portal={id} aria-describedby={`${id}-description`}>
+  <span class="portal-surface" aria-hidden="true"><span class="portal-reflection"></span></span>
+  <span class="portal-copy"><span class="portal-title">{title}</span><span class="portal-description" id={`${id}-description`}>{description}</span><span class="portal-detail">{detail}<span aria-hidden="true"> ↗</span></span></span>
+</a>
