@@ -1,11 +1,13 @@
 ---
-title: "Wynn's Save Point 的设计原则"
-description: "记录这个个人网站第一版的定位、风格边界和长期写作目标。"
+title: "【历史已失效】Wynn's Save Point 首版设计原则"
+description: "历史已失效：首版定位和风格的原始记录，不作为当前设计依据；当前要求见 design/CURRENT.md。"
 date: 2026-05-28
 tags: ["Design", "Blog", "Astro"]
 category: "Thoughts"
 draft: true
 ---
+
+> **历史资料，已失效，不作为当前设计依据。** 以下是 2026 年 5 月的首版原文。当前定位是夏日桌面个人网站，见[当前产品与设计说明](../../design/CURRENT.md)。
 
 这个网站的目标不是做成冷冰冰的作品集，也不是做成完整的游戏界面。
 

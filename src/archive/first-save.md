@@ -1,11 +1,13 @@
 ---
-title: "第一条存档"
-description: "把个人网站从想法推进到可运行骨架。"
+title: "【历史记录】第一条存档"
+description: "历史记录：首版个人网站搭建随记，不作为当前需求或设计指令。"
 date: 2026-05-28
 tags: ["Save Point", "Writing"]
 mood: "Log"
 draft: true
 ---
+
+> **历史资料，不作为当前需求或设计指令。** 以下记录首版搭建时的想法，当前方向见[当前产品与设计说明](../../design/CURRENT.md)。
 
 今天先把网站的基础结构搭起来。
 

@@ -1,5 +1,7 @@
 # Summer Desktop assets
 
+素材来源记录。当前产品定位与设计要求见 [CURRENT.md](CURRENT.md)；以下生成提示词仅用于追溯素材制作，不作为独立的产品指令。
+
 Generated with the built-in ImageGen tool on 2026-09-09. No API-key CLI fallback.
 The supplied sketch was attached to the design-board request. Existing site
 styling was not used as a visual reference. The original avatar is retained.
@@ -10,6 +12,7 @@ styling was not used as a visual reference. The original avatar is retained.
 - `public/images/summer/*-mobile.webp`: 780 × 1560 center crops for phone displays.
 - `public/images/summer/og.jpg`: 1200 × 630 sharing-image crop of the new day wallpaper.
 - `public/favicon-summer.png`: original cat avatar resized for the browser tab.
+- `public/favicon.ico`: the same cat PNG packaged as the default ICO entry point.
 - Dock/control glyphs: Phosphor Icons Core 2.1.1 (MIT), imported as build-time SVG.
 
 ## Wallpaper prompt
