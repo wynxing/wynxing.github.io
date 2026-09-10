@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Wynn's Save Point">
-  <rect width="64" height="64" fill="#f6efe2"/>
-  <path fill="#26313d" d="M8 10h48v44H8z"/>
-  <path fill="#fffaf0" d="M12 14h40v36H12z"/>
-  <path fill="#c75f3d" d="M18 22h12v4H18zm0 8h28v4H18zm0 8h22v4H18z"/>
-  <path fill="#5d8b58" d="M42 20h6v6h-6z"/>
-  <path fill="#26313d" d="M14 16h36v2H14zm0 30h36v2H14z"/>
-</svg>
