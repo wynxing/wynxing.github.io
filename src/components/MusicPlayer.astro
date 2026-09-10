@@ -1,0 +1,20 @@
+---
+import AppIcon from './AppIcon.astro';
+import { playlist } from '../data/music';
+---
+<section class="music-player glass" data-music-player data-playlist={JSON.stringify(playlist)} transition:persist="summer-music" aria-label="音乐播放器">
+  <audio preload="none" data-audio></audio>
+  <div class="music-summary">
+    <div class="music-cover"><img data-cover alt="" hidden/><AppIcon name="music-notes"/></div>
+    <div class="music-meta"><span class="small-label">SOUNDS OF SUMMER</span><strong data-track-title>歌单准备中</strong><span data-track-artist>留一点时间，听听喜欢的声音。</span></div>
+    <button type="button" class="music-expand icon-button" data-expand aria-controls="music-details" aria-label="展开播放器" aria-expanded="false"><AppIcon name="caret-up"/></button>
+    <button type="button" class="play-button icon-button" data-play disabled aria-label="播放"><AppIcon name="play"/><span data-pause hidden><AppIcon name="pause"/></span></button>
+  </div>
+  <div class="music-details" id="music-details">
+    <div class="music-timeline"><span data-elapsed>0:00</span><input data-seek type="range" min="0" max="100" value="0" step="0.1" aria-label="播放进度" disabled/><span data-duration>0:00</span></div>
+    <div class="music-controls"><span class="music-note" data-music-note>你的夏日歌单</span><button class="icon-button" data-prev disabled aria-label="上一首"><AppIcon name="skip-back"/></button><button class="icon-button" data-next disabled aria-label="下一首"><AppIcon name="skip-forward"/></button><label class="volume-control"><AppIcon name="speaker-high"/><input data-volume type="range" min="0" max="1" step="0.01" value="0.7" aria-label="音量" disabled/></label></div>
+  </div>
+  <p data-music-error class="music-error" role="status" hidden></p>
+  <noscript><p class="music-error">启用 JavaScript 后可以使用播放器。</p></noscript>
+</section>
+<script>import '../scripts/music-player';</script>

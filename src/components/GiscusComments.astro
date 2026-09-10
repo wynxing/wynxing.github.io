@@ -15,6 +15,8 @@ import { giscusConfig } from '../consts';
 </section>
 
 <script>
+  import { onPage } from '../scripts/lifecycle';
+  onPage((signal, cleanup) => {
   const host = document.querySelector<HTMLElement>('[data-giscus]');
   const mount = document.querySelector<HTMLElement>('[data-giscus-mount]');
   if (host && mount) {
@@ -61,6 +63,8 @@ import { giscusConfig } from '../consts';
     );
 
     observer.observe(host);
-    document.addEventListener('themechange', syncTheme);
+    cleanup(() => observer.disconnect());
+    document.addEventListener('themechange', syncTheme, { signal });
   }
+  });
 </script>

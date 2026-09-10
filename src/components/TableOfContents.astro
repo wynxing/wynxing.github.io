@@ -5,15 +5,18 @@ const headings = (Astro.props.headings ?? []).filter(heading => heading.depth ==
 ---
 {headings.length > 0 && <aside class="toc-column"><details class="toc glass" open><summary>这篇的脉络 <span aria-hidden="true">⌄</span></summary><nav aria-label="文章目录"><ol>{headings.map(heading => <li class={`toc-d${heading.depth}`}><a href={`#${heading.slug}`}>{heading.text}</a></li>)}</ol></nav></details></aside>}
 <script>
+  import { onPage } from '../scripts/lifecycle';
+  onPage((signal) => {
   const toc = document.querySelector<HTMLDetailsElement>('.toc');
   if (toc) {
     const compact = matchMedia('(max-width: 959px)');
     toc.open = !compact.matches;
-    compact.addEventListener('change', event => { toc.open = !event.matches; });
+    compact.addEventListener('change', event => { toc.open = !event.matches; }, { signal });
     const links = [...toc.querySelectorAll<HTMLAnchorElement>('a')];
     const headings = links.map(link => document.getElementById(decodeURIComponent(link.hash.slice(1)))).filter((heading): heading is HTMLElement => Boolean(heading));
     let scheduled = false;
     const update = () => {
+      if (signal.aborted) return;
       let active = headings[0];
       headings.forEach(heading => { if (heading.getBoundingClientRect().top <= 150) active = heading; });
       links.forEach(link => {
@@ -22,7 +25,8 @@ const headings = (Astro.props.headings ?? []).filter(heading => heading.depth ==
       });
       scheduled = false;
     };
-    addEventListener('scroll', () => { if (!scheduled) { scheduled = true; requestAnimationFrame(update); } }, { passive: true });
+    addEventListener('scroll', () => { if (!scheduled) { scheduled = true; requestAnimationFrame(update); } }, { passive: true, signal });
     update();
   }
+  });
 </script>

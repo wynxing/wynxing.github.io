@@ -21,25 +21,50 @@ pnpm deploy
 
 ## Appearance and reading
 
-The homepage is a responsive mint glass space with four organic navigation
-portals. All sections remain accessible even when their collections are empty;
-a single latest-article link is shown beside the articles portal. Article lists,
-search, and supporting pages share soft surfaces, while the reading area stays
-still and legible. Pointer highlights run only for a fine mouse pointer, and
-reduced-motion preferences disable the ambient and entry animations. Native
-cross-document transitions progressively enhance ordinary links without delays.
+The homepage is a summer desktop: day/night meadow wallpaper, frosted glass
+widgets, the original black-cat avatar, and a five-icon Dock. Public pages share
+new system typography and readable opaque glass surfaces. The default theme
+follows the OS; explicit choices persist under the existing `theme` key.
+Mobile layouts retain a compact Dock and show local date/time without location
+requests. Reduced-motion and reduced-transparency preferences are respected.
 
-The default appearance follows the system and responds to system changes.
-Explicit light/dark choices use the existing `theme` local-storage key.
+Astro ClientRouter preserves a single audio element across internal navigation.
+Page-scoped listeners, search instances and observers are released before swaps
+and initialized after navigation. Existing content URLs, CMS fields, RSS,
+Pagefind indexing and Giscus pathname mappings are retained. RSS and the CMS
+use full navigation. No frontend framework was added.
 
-List filters use `?category=Thoughts&tag=Architecture`; category and tag are
-combined, and browser history restores the selection. Existing content URLs,
-CMS fields, RSS, and Giscus pathname mappings are unchanged.
+### Configure music
 
-After `pnpm build`, run `pnpm test` for theme/filter behavior and generated link
-checks. `pnpm preview` includes the generated Pagefind search index. The pnpm
-workspace configuration allows the existing esbuild, sharp, and workerd native
-dependency setup scripts; no frontend framework has been added.
+Edit `src/data/music.ts`. Each track has `id`, `title`, `artist`, `src` and an
+optional `cover`. Use unique stable IDs, local `/music/...` assets under `public/`,
+or stable HTTPS audio URLs. Remote audio hosts must allow direct playback;
+HTTP range requests are recommended for reliable seeking. Cover images are
+optional and fall back to a music icon on failure.
+
+The production playlist is intentionally empty and displays “歌单准备中”.
+Playback starts only after a visitor presses play. Internal navigation preserves
+playback and volume; a refresh does not autoplay. Single-track playlists disable
+track switching; multi-track playlists wrap. Failed audio can be retried.
+
+### Validate
+
+Run `pnpm check`, `pnpm build`, then `pnpm test` (generated-link tests read `dist`).
+Use `pnpm preview` to include the generated Pagefind search index. Tests cover
+theme preferences, filters, links, player state, race conditions and lifecycle
+cleanup. Test-only real audio is available with:
+
+```bash
+python tests/serve_audio_fixture.py --port 4322
+```
+
+This loopback-only server serves the existing build and injects test tracks into
+responses, without editing source or `dist`. Its third track fails once, then
+succeeds on retry; restarting the server resets this scenario. The synthesized
+audio is not part of the public website or production playlist.
+
+See `design/summer-reference.png` for the visual direction,
+`design/ASSETS.md` for image provenance and `design/QA.md` for browser validation.
 
 ## Deployment
 

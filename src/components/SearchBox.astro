@@ -4,16 +4,20 @@
   <noscript><p>搜索需要启用 JavaScript，也可以<a href="/blog/">直接浏览文章</a>。</p></noscript>
 </section>
 <script>
+  import { onPage } from '../scripts/lifecycle';
+  onPage((signal, cleanup) => {
   const status = document.querySelector<HTMLElement>('[data-search-status]');
+  if (!status) return;
   const pagefindUiPath = '/pagefind/pagefind-ui.js';
   const link = document.createElement('link');
   link.rel = 'stylesheet';
   link.href = '/pagefind/pagefind-ui.css';
-  document.head.append(link);
+  if (!document.querySelector('link[href="/pagefind/pagefind-ui.css"]')) document.head.append(link);
   import(/* @vite-ignore */ pagefindUiPath).then(() => {
-    const ui = window as typeof window & { PagefindUI?: new (options: Record<string, unknown>) => unknown };
+    if (signal.aborted) return;
+    const ui = window as typeof window & { PagefindUI?: new (options: Record<string, unknown>) => { destroy?: () => void } };
     if (!ui.PagefindUI) throw new Error('Search unavailable');
-    new ui.PagefindUI({
+    const search = new ui.PagefindUI({
       element: '#search', showSubResults: true, showImages: false,
       translations: {
         placeholder: '搜索文章、笔记和项目', clear_search: '清空', load_more: '加载更多',
@@ -21,8 +25,10 @@
         many_results: '[COUNT] 个结果', one_result: '[COUNT] 个结果', searching: '搜索中…'
       }
     });
+    cleanup(() => search.destroy?.());
     status?.remove();
   }).catch(() => {
-    if (status) status.textContent = '搜索暂时无法加载，请刷新重试，或从导航进入文章列表。';
+    if (!signal.aborted && status) status.textContent = '搜索暂时无法加载，请刷新重试，或从导航进入文章列表。';
+  });
   });
 </script>

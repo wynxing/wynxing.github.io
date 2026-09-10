@@ -17,6 +17,9 @@ importers:
       '@astrojs/sitemap':
         specifier: ^3.7.3
         version: 3.7.3
+      '@phosphor-icons/core':
+        specifier: ^2.1.1
+        version: 2.1.1
       astro:
         specifier: ^6.4.0
         version: 6.4.0(@types/node@24.12.4)(jiti@2.7.0)(lightningcss@1.32.0)(rollup@4.60.4)(supports-color@10.2.2)(yaml@2.9.0)
@@ -711,6 +714,9 @@ packages:
     resolution: {integrity: sha512-Fa2Iyw7kaDRzGMfNYNUXNW2zbL5FQVDgSOcbDHdzBrDEdpqOqg8TcZ68F22ol6NJ9IGzvUdmeyZypLW5dyhqsg==}
     cpu: [x64]
     os: [win32]
+
+  '@phosphor-icons/core@2.1.1':
+    resolution: {integrity: sha512-v4ARvrip4qBCImOE5rmPUylOEK4iiED9ZyKjcvzuezqMaiRASCHKcRIuvvxL/twvLpkfnEODCOJp5dM4eZilxQ==}
 
   '@poppinss/colors@4.1.6':
     resolution: {integrity: sha512-H9xkIdFswbS8n1d6vmRd8+c10t2Qe+rZITbbDHHkQixH5+2x1FDGmi/0K+WgWiqQFKPSlIYB7jlH6Kpfn6Fleg==}
@@ -2916,6 +2922,8 @@ snapshots:
 
   '@pagefind/windows-x64@1.5.2':
     optional: true
+
+  '@phosphor-icons/core@2.1.1': {}
 
   '@poppinss/colors@4.1.6':
     dependencies:

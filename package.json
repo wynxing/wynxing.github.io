@@ -22,6 +22,7 @@
     "@astrojs/mdx": "^6.0.0",
     "@astrojs/rss": "^4.0.18",
     "@astrojs/sitemap": "^3.7.3",
+    "@phosphor-icons/core": "^2.1.1",
     "astro": "^6.4.0"
   },
   "devDependencies": {

@@ -1,0 +1,32 @@
+---
+import icon0 from '@phosphor-icons/core/assets/fill/article-fill.svg?raw';
+import icon1 from '@phosphor-icons/core/assets/fill/folder-simple-fill.svg?raw';
+import icon2 from '@phosphor-icons/core/assets/fill/notepad-fill.svg?raw';
+import icon3 from '@phosphor-icons/core/assets/fill/user-fill.svg?raw';
+import icon4 from '@phosphor-icons/core/assets/fill/magnifying-glass-fill.svg?raw';
+import icon5 from '@phosphor-icons/core/assets/fill/music-notes-fill.svg?raw';
+import icon6 from '@phosphor-icons/core/assets/fill/caret-up-fill.svg?raw';
+import icon7 from '@phosphor-icons/core/assets/fill/play-fill.svg?raw';
+import icon8 from '@phosphor-icons/core/assets/fill/pause-fill.svg?raw';
+import icon9 from '@phosphor-icons/core/assets/fill/skip-back-fill.svg?raw';
+import icon10 from '@phosphor-icons/core/assets/fill/skip-forward-fill.svg?raw';
+import icon11 from '@phosphor-icons/core/assets/fill/speaker-high-fill.svg?raw';
+interface Props { name: string; }
+const icons: Record<string, string> = {
+  'article': icon0,
+  'folder-simple': icon1,
+  'notepad': icon2,
+  'user': icon3,
+  'magnifying-glass': icon4,
+  'music-notes': icon5,
+  'caret-up': icon6,
+  'play': icon7,
+  'pause': icon8,
+  'skip-back': icon9,
+  'skip-forward': icon10,
+  'speaker-high': icon11
+};
+const svg = icons[Astro.props.name];
+if (!svg) throw new Error(`Unknown application icon: ${Astro.props.name}`);
+---
+<span class="app-symbol" aria-hidden="true" set:html={svg} />

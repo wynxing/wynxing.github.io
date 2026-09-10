@@ -14,6 +14,8 @@ const { count, tags = [], categories = [], kind = 'blog' } = Astro.props;
   <div class="empty-state glass" data-tag-empty hidden><h2>这一页，暂时留白。</h2><p>没有符合筛选条件的内容，换个标签看看。</p><a href={Astro.url.pathname} data-clear>查看全部 ↗</a></div>
 </div>
 <script>
+  import { onPage } from '../scripts/lifecycle';
+  onPage((signal) => {
   document.querySelectorAll<HTMLElement>('[data-list]').forEach(root => {
     const form = root.querySelector<HTMLFormElement>('[data-filters]')!;
     const tagSelect = form.querySelector<HTMLSelectElement>('[name="tag"]')!;
@@ -51,16 +53,17 @@ const { count, tags = [], categories = [], kind = 'blog' } = Astro.props;
       for (const [key, value] of [['tag', tagSelect.value], ['category', categorySelect?.value || '']]) {
         if (value) url.searchParams.set(key, value); else url.searchParams.delete(key);
       }
-      history.pushState(null, '', url);
+      history.pushState(history.state, '', url);
       apply();
     });
     root.querySelectorAll<HTMLAnchorElement>('[data-clear]').forEach(link => link.addEventListener('click', event => {
       if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
       event.preventDefault();
-      history.pushState(null, '', link.href);
+      history.pushState(history.state, '', link.href);
       apply();
     }));
-    window.addEventListener('popstate', apply);
+    window.addEventListener('popstate', apply, { signal });
     apply();
+  });
   });
 </script>

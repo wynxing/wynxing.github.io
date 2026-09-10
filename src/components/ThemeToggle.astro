@@ -7,7 +7,7 @@
   </select>
 </label>
 <script>
-  const select = document.querySelector<HTMLSelectElement>('[data-theme-select]');
+  let select = document.querySelector<HTMLSelectElement>('[data-theme-select]');
   const system = window.matchMedia('(prefers-color-scheme: dark)');
   let preference = document.documentElement.dataset.themePreference || 'system';
   const apply = () => {
@@ -17,16 +17,25 @@
     if (select) select.value = preference;
     document.dispatchEvent(new CustomEvent('themechange', { detail: theme }));
   };
-  select?.addEventListener('change', () => {
-    preference = select.value;
-    try { localStorage.setItem('theme', preference); } catch { /* Session preference still applies. */ }
+  const bind = () => {
+    select = document.querySelector<HTMLSelectElement>('[data-theme-select]');
+    if (select && !select.dataset.bound) {
+      select.dataset.bound = 'true';
+      select.addEventListener('change', () => {
+        preference = select!.value;
+        try { localStorage.setItem('theme', preference); } catch {}
+        apply();
+      });
+    }
     apply();
-  });
+  };
+  document.addEventListener('astro:after-swap', apply);
+  document.addEventListener('astro:page-load', bind);
   system.addEventListener('change', () => { if (preference === 'system') apply(); });
   window.addEventListener('storage', (event) => {
     if (event.key !== 'theme' && event.key !== null) return;
     preference = event.newValue === 'light' || event.newValue === 'dark' ? event.newValue : 'system';
     apply();
   });
-  apply();
+  bind();
 </script>

@@ -1,0 +1,17 @@
+---
+import MusicPlayer from './MusicPlayer.astro';
+interface Props { latest?: { title: string; href: string; date: string; datetime: string }; }
+const { latest } = Astro.props;
+---
+<section class="summer-desktop" aria-labelledby="desktop-title">
+  <div class="desktop-grid">
+    <div class="desktop-identity">
+      <a href="/about/" class="avatar-orbit glass" aria-label="认识 Wynn"><img src="/images/avatar.png" alt="Wynn 的像素黑猫头像" width="176" height="176"/></a>
+      <h1 id="desktop-title">Wynn</h1><p>在这里，存个档。</p>
+    </div>
+    <div class="greeting glass"><span class="small-label">A LITTLE SPACE OF MY OWN</span><h2 data-greeting>你好，欢迎回来。</h2><p>写代码，也记下沿途。</p><span class="greeting-spark" aria-hidden="true"></span></div>
+    <div class="music-slot" id="home-music-slot"><MusicPlayer /></div>
+  </div>
+  {latest && <aside class="desktop-latest glass"><span>最近写下</span><a data-latest-entry href={latest.href}>{latest.title}</a><time datetime={latest.datetime}>{latest.date}</time><span aria-hidden="true">↗</span></aside>}
+  <p class="desktop-caption">把日子过成喜欢的样子。<span>Make room for a little sunshine.</span></p>
+</section>

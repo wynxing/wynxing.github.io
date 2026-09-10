@@ -1,6 +1,8 @@
 ---
 import '../styles/global.css';
-import '../styles/glass-scene.css';
+import { ClientRouter } from 'astro:transitions';
+import DesktopDock from '../components/DesktopDock.astro';
+import MusicPlayer from '../components/MusicPlayer.astro';
 import { SITE_DESCRIPTION, SITE_TITLE, cloudflareAnalyticsToken } from '../consts';
 import SiteNav from '../components/SiteNav.astro';
 import { githubProfileUrl } from '../consts';
@@ -16,7 +18,7 @@ interface Props {
 const {
   title = SITE_TITLE,
   description = SITE_DESCRIPTION,
-  image = '/og.png',
+  image = '/images/summer/og.jpg',
   showProgress = false,
 } = Astro.props;
 const canonical = new URL(Astro.url.pathname, Astro.site);
@@ -35,11 +37,9 @@ const isHome = pathname === '/' || pathname === '';
     <title>{displayTitle}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
-    <link rel="preload" href="/fonts/outfit-latin-wght.woff2" as="font" type="font/woff2" crossorigin />
+    <ClientRouter fallback="swap" />
     {isHome && <link rel="preload" href="/images/avatar.png" as="image" />}
-    <link rel="stylesheet" href="/fonts/fonts.css" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="icon" href="/favicon.ico" />
+    <link rel="icon" type="image/png" href="/favicon-summer.png" />
     <link rel="alternate" type="application/rss+xml" title={SITE_TITLE} href="/rss.xml" />
     <meta property="og:title" content={displayTitle} />
     <meta property="og:description" content={description} />
@@ -73,6 +73,7 @@ const isHome = pathname === '/' || pathname === '';
     )}
   </head>
   <body class={isHome ? 'is-home' : undefined}>
+    <div class="summer-wallpaper" aria-hidden="true"></div>
     <a href="#content" class="skip-link">跳到正文</a>
     {showProgress && (
       <div class="reading-progress" aria-hidden="true"><span></span></div>
@@ -81,10 +82,14 @@ const isHome = pathname === '/' || pathname === '';
     <main id="content" tabindex="-1">
       <slot />
     </main>
+    <div id="music-home">{!isHome && <MusicPlayer />}</div>
+    <DesktopDock />
     <footer class="site-footer container">
       <div><a class="footer-name" href="/">Wynn’s Save Point<span class="brand-dot">.</span></a><p>记录构建、学习和路上的想法。</p></div>
-      <nav aria-label="页脚导航"><a href={githubProfileUrl} target="_blank" rel="noreferrer">GitHub ↗</a><a href="/rss.xml">RSS ↗</a><a href="/admin/">写作后台</a></nav>
+      <nav aria-label="页脚导航"><a href={githubProfileUrl} target="_blank" rel="noreferrer">GitHub ↗</a><a href="/rss.xml" data-astro-reload>RSS ↗</a><a href="/admin/" data-astro-reload>写作后台</a></nav>
       <span class="copyright">© {new Date().getFullYear()} Wynn</span>
     </footer>
   </body>
 </html>
+
+<script>import '../scripts/desktop';</script>

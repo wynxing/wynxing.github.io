@@ -1,14 +1,12 @@
 ---
 import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
-import GlassScene from '../components/GlassScene.astro';
+import SummerDesktop from '../components/SummerDesktop.astro';
 import { byDateDesc, entryHref, formatDate } from '../utils/content';
 const posts = byDateDesc(await getCollection('blog', ({ data }) => !data.draft));
-const projects = await getCollection('projects', ({ data }) => !data.draft);
-const notes = await getCollection('notes', ({ data }) => !data.draft);
 const newest = posts[0];
 const latest = newest ? { title: newest.data.title, href: entryHref(newest), date: formatDate(newest.data.date), datetime: newest.data.date.toISOString() } : undefined;
 ---
 <BaseLayout>
-  <GlassScene articleCount={posts.length} projectCount={projects.length} noteCount={notes.length} latest={latest}/>
+  <SummerDesktop latest={latest}/>
 </BaseLayout>
