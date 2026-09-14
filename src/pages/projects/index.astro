@@ -3,14 +3,14 @@ import { getCollection } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import ListGrid from '../../components/ListGrid.astro';
 import PostCard from '../../components/PostCard.astro';
-import { byDateDesc } from '../../utils/content';
-const entries = byDateDesc(await getCollection('projects', ({ data }) => !data.draft));
+import { byProjectOrder } from '../../utils/content';
+const entries = byProjectOrder(await getCollection('projects', ({ data }) => !data.draft));
 const tags = [...new Set(entries.flatMap(entry => entry.data.tags))].sort();
 
 ---
-<BaseLayout title="项目" description="做过的工具和站点，记录每一次从想法到实现。" section="项目">
+<BaseLayout title="项目" description="做过的产品、我负责的工作，以及最终交付的成果。" section="项目">
   <section class="page">
-    <header class="page-header"><span class="eyebrow">BUILT ALONG THE WAY</span><h1>项目<span class="accent">.</span><span class="page-count">{String(entries.length).padStart(2, '0')}</span></h1><p>做过的工具和站点，记录每一次从想法到实现。</p></header>
+    <header class="page-header"><span class="eyebrow">BUILT ALONG THE WAY</span><h1>项目<span class="accent">.</span><span class="page-count">{String(entries.length).padStart(2, '0')}</span></h1><p>做过的产品、我负责的工作，以及最终交付的成果。</p></header>
     {entries.length > 0 ? <ListGrid count={entries.length} tags={tags}  kind="projects">{entries.map(entry => <PostCard entry={entry}/>)}</ListGrid> : <div class="empty-state glass"><span class="eyebrow">TO BE CONTINUED</span><h2>这里，还在慢慢积累。</h2><p>暂时没有公开的项目。先去看看已经写下的文章。</p><a href="/blog/">浏览文章 ↗</a></div>}
   </section>
 </BaseLayout>

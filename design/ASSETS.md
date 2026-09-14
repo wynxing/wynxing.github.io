@@ -32,3 +32,7 @@ Use photographic green meadow, blue sky, fine glass edges, translucent pearl
 surfaces, restrained shadows, system typography and colorful rounded app icons.
 Preserve the original black cat in implementation; reference-board illustrative
 content is not real site content. Article surfaces prioritize readability.
+
+## 项目截图
+
+- `public/images/projects/maydolist-focus.png`：来自 Wynn 的 MayDolist 仓库 `docs/screenshots/focus-demo.png`，展示真实 Vue + Tauri 界面与内置脱敏 Demo 数据。来源：[MayDolist 截图说明](https://github.com/wynxing/MayDolist#demo-截图)。不代表真实用户或工作内容。

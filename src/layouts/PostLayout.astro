@@ -3,7 +3,7 @@ import { getCollection, type CollectionEntry } from 'astro:content';
 import BaseLayout from './BaseLayout.astro';
 import GiscusComments from '../components/GiscusComments.astro';
 import TableOfContents from '../components/TableOfContents.astro';
-import { formatDate, readingTime, tagHref, byDateDesc, entryHref, categoryLabel, statusLabel } from '../utils/content';
+import { formatDate, readingTime, tagHref, byDateDesc, byProjectOrder, entryHref, categoryLabel, statusLabel } from '../utils/content';
 
 type Entry = CollectionEntry<'blog'> | CollectionEntry<'projects'>;
 
@@ -18,10 +18,12 @@ const minutes = readingTime(body);
 const isProject = entry.collection === 'projects';
 const project = isProject ? entry.data : null;
 const section = entry.collection === 'blog' ? '文章' : '项目';
-const siblings = byDateDesc(await getCollection(entry.collection, ({ data }) => !data.draft));
+const siblings = isProject
+  ? byProjectOrder(await getCollection('projects', ({ data }) => !data.draft))
+  : byDateDesc(await getCollection('blog', ({ data }) => !data.draft));
 const position = siblings.findIndex(sibling => sibling.id === entry.id);
-const previous = siblings[position + 1];
-const next = position > 0 ? siblings[position - 1] : undefined;
+const previous = isProject ? siblings[position - 1] : siblings[position + 1];
+const next = isProject ? siblings[position + 1] : siblings[position - 1];
 ---
 
 <BaseLayout
@@ -37,12 +39,14 @@ const next = position > 0 ? siblings[position - 1] : undefined;
       <p class="standfirst">{entry.data.description}</p>
       <div class="meta-line">
         <time datetime={entry.data.date.toISOString()}>{formatDate(entry.data.date)}</time>
-        <span>{minutes}</span>
+        {!isProject && <span>{minutes}</span>}
         {entry.data.updated && <span>更新 {formatDate(entry.data.updated)}</span>}
         {'category' in entry.data && <span>{categoryLabel(entry.data.category)}</span>}
         {'mood' in entry.data && <span>{entry.data.mood}</span>}
         {'status' in entry.data && <span>{statusLabel(entry.data.status)}</span>}
       </div>
+      {project?.role && <p class="project-role">{project.role}</p>}
+      {project?.highlight && <p class="project-highlight"><span>代表成果</span>{project.highlight}</p>}
       {entry.data.tags.length > 0 && (
         <ul class="tag-list" aria-label="标签">
           {entry.data.tags.map((tag) => (
@@ -69,16 +73,16 @@ const next = position > 0 ? siblings[position - 1] : undefined;
       )}
     </header>
     <div class:list={['reading-layout', { 'has-toc': headings.some(heading => heading.depth === 2 || heading.depth === 3) }]}>
-      <TableOfContents headings={headings} />
+      <TableOfContents headings={headings} isProject={isProject} />
       <div class="prose" data-pagefind-body>
         <slot />
       </div>
     </div>
     <div class="article-end">
-      <p class="end-mark"><span aria-hidden="true">✳</span> 这一篇，存好了。</p>
-      {(previous || next) && <nav class="adjacent-posts" aria-label="相邻文章">
-        {previous && <a class="glass" href={entryHref(previous)}><span class="eyebrow">← 上一篇</span><span>{previous.data.title}</span></a>}
-        {next && <a class="glass" href={entryHref(next)}><span class="eyebrow">下一篇 →</span><span>{next.data.title}</span></a>}
+      <p class="end-mark"><span aria-hidden="true">✳</span> {isProject ? '这个项目，存好了。' : '这一篇，存好了。'}</p>
+      {(previous || next) && <nav class="adjacent-posts" aria-label={isProject ? '相邻项目' : '相邻文章'}>
+        {previous && <a class="glass" href={entryHref(previous)}><span class="eyebrow">{isProject ? '← 上一个项目' : '← 上一篇'}</span><span>{previous.data.title}</span></a>}
+        {next && <a class="glass" href={entryHref(next)}><span class="eyebrow">{isProject ? '下一个项目 →' : '下一篇 →'}</span><span>{next.data.title}</span></a>}
       </nav>}
       <GiscusComments />
     </div>

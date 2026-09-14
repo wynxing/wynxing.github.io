@@ -14,6 +14,14 @@ Wynn 的个人网站：一个可以认识 Wynn、看看他的作品、读文章�
 
 实现使用 Astro、MDX、Pagefind、Giscus 和 Cloudflare Workers Static Assets。`/blog/` 是保留的文章地址，不定义整个网站的定位。下面的命令和配置说明服务于当前实现。
 
+## 项目内容
+
+项目采用摘要卡片与独立详情页，内容位于 `src/content/projects/`。当前顺序为 Rootly → MayDolist → NeoCode，地址分别为 `/projects/rootly/`、`/projects/maydolist/`、`/projects/neocode/`。
+
+项目 frontmatter 支持可选的 `order`（非负整数，小值优先）、`role`（个人角色）、`highlight`（代表成果）。未设置 `order` 的项目排在指定顺序之后；同序或均未设置时按日期倒序，再按内容 ID 排序。列表与相邻项目导航共用该规则；草稿不生成公开页面。CMS 已提供相应字段，文章排序不变。
+
+正文按「产品介绍 → 我负责的内容 → 最终成果 → 相关链接」组织，区分团队能力与个人贡献；持续开发的项目注明成果核验日期。项目日期表示本页发布日，不代表项目开始时间。只提供真实可公开的链接与图片，不使用无依据的指标。素材来源见 [ASSETS](design/ASSETS.md)。
+
 ## Commands
 
 Use pnpm 10.11.1, pinned in `package.json` to match the Cloudflare build image.

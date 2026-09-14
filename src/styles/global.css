@@ -1767,3 +1767,43 @@ input[type="range"] {
   .music-player { padding-inline: 15px; }
   .volume-control input { width: 44px; }
 }
+
+/* Project summaries keep product, ownership and outcome together. */
+.project-grid {
+  gap: 18px;
+}
+.post-project {
+  grid-template-columns: minmax(0, 1fr);
+  padding: clamp(20px, 4vw, 32px);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--stamp-soft);
+}
+.project-role {
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.8;
+}
+.project-highlight {
+  margin: 16px 0;
+  padding-left: 14px;
+  border-left: 2px solid var(--stamp);
+  font-size: 14px;
+  line-height: 1.85;
+  overflow-wrap: anywhere;
+}
+.project-highlight > span {
+  display: block;
+  color: var(--stamp);
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+.project-detail-link {
+  display: inline-block;
+  color: var(--stamp);
+  font-size: 12px;
+}
+.post-project .card-description {
+  font-size: 14px;
+}

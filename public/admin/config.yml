@@ -54,6 +54,9 @@ collections:
       - { label: 更新日期, name: updated, widget: datetime, date_format: yyyy-MM-dd, time_format: false, picker_utc: true, required: false }
       - { label: 标签, name: tags, widget: list, required: false }
       - { label: 草稿, name: draft, widget: boolean, default: false }
+      - { label: 展示顺序, name: order, widget: number, value_type: int, min: 0, required: false, hint: 数字越小越靠前；留空则排在指定顺序的项目之后 }
+      - { label: 我的角色, name: role, widget: string, required: false }
+      - { label: 代表成果, name: highlight, widget: text, required: false }
       - { label: 技术栈, name: stack, widget: list, required: false }
       - { label: 仓库, name: repo, widget: string, required: false, hint: 完整 URL }
       - { label: 演示, name: demo, widget: string, required: false, hint: 完整 URL }

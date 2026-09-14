@@ -1,9 +1,10 @@
 ---
 interface Heading { depth: number; slug: string; text: string; }
-interface Props { headings?: Heading[]; }
+interface Props { headings?: Heading[]; isProject?: boolean; }
+const { isProject = false } = Astro.props;
 const headings = (Astro.props.headings ?? []).filter(heading => heading.depth === 2 || heading.depth === 3);
 ---
-{headings.length > 0 && <aside class="toc-column"><details class="toc glass" open><summary>这篇的脉络 <span aria-hidden="true">⌄</span></summary><nav aria-label="文章目录"><ol>{headings.map(heading => <li class={`toc-d${heading.depth}`}><a href={`#${heading.slug}`}>{heading.text}</a></li>)}</ol></nav></details></aside>}
+{headings.length > 0 && <aside class="toc-column"><details class="toc glass" open><summary>{isProject ? '项目概览' : '这篇的脉络'} <span aria-hidden="true">⌄</span></summary><nav aria-label={isProject ? '项目目录' : '文章目录'}><ol>{headings.map(heading => <li class={`toc-d${heading.depth}`}><a href={`#${heading.slug}`}>{heading.text}</a></li>)}</ol></nav></details></aside>}
 <script>
   import { onPage } from '../scripts/lifecycle';
   onPage((signal) => {

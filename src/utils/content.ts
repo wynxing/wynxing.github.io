@@ -8,6 +8,16 @@ export function byDateDesc<T extends Entry>(entries: T[]) {
   return entries.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
 }
 
+export function byProjectOrder<T extends CollectionEntry<'projects'>>(entries: T[]) {
+  return [...entries].sort((a, b) => {
+    const aOrder = a.data.order ?? Number.POSITIVE_INFINITY;
+    const bOrder = b.data.order ?? Number.POSITIVE_INFINITY;
+    return (aOrder === bOrder ? 0 : aOrder - bOrder)
+      || b.data.date.valueOf() - a.data.date.valueOf()
+      || a.id.localeCompare(b.id);
+  });
+}
+
 export function formatDate(date: Date) {
   return new Intl.DateTimeFormat('zh-CN', {
     year: 'numeric',
