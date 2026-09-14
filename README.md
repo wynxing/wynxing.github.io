@@ -1,6 +1,6 @@
 # Wynn's Save Point
 
-Wynn 的个人网站：一个可以认识 Wynn、看看他的作品、读文章、翻笔记，也可以停留片刻的夏日桌面。文章是其中一个板块，首页以个人身份和各板块入口组织体验。
+Wynn 的个人网站：一个可以认识 Wynn、看看他的作品、读文章，也可以停留片刻的夏日桌面。文章是其中一个板块，首页以个人身份和各板块入口组织体验。
 
 当前视觉方向是夏日晴空绿野、蓝调夏夜、macOS 风格的液态磨砂玻璃和彩色立体 Dock 图标。保留站名、黑猫头像和真实内容。
 
@@ -34,7 +34,7 @@ pnpm deploy
 ## Appearance and reading
 
 The homepage is a summer desktop: day/night meadow wallpaper, frosted glass
-widgets, the original black-cat avatar, and a five-icon Dock. Public pages share
+widgets, the original black-cat avatar, and a four-icon Dock. Public pages share
 new system typography and readable opaque glass surfaces. The default theme
 follows the OS; explicit choices persist under the existing `theme` key.
 Mobile layouts retain a compact Dock and show local date/time without location

@@ -18,13 +18,6 @@ const blog = defineCollection({
   }),
 });
 
-const notes = defineCollection({
-  loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/notes' }),
-  schema: writingSchema.extend({
-    mood: z.enum(['Log', 'Idea', 'Clip', 'Bug', 'Study']).default('Log'),
-  }),
-});
-
 const projects = defineCollection({
   loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/projects' }),
   schema: writingSchema.extend({
@@ -35,4 +28,4 @@ const projects = defineCollection({
   }),
 });
 
-export const collections = { blog, notes, projects };
+export const collections = { blog, projects };

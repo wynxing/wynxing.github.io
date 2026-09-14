@@ -2,7 +2,6 @@ import type { CollectionEntry } from 'astro:content';
 
 export type Entry =
   | CollectionEntry<'blog'>
-  | CollectionEntry<'notes'>
   | CollectionEntry<'projects'>;
 
 export function byDateDesc<T extends Entry>(entries: T[]) {
@@ -21,7 +20,7 @@ export function formatDate(date: Date) {
 }
 
 export function collectionPath(collection: Entry['collection']) {
-  return collection === 'blog' ? 'blog' : collection === 'notes' ? 'notes' : 'projects';
+  return collection;
 }
 
 export function entryHref(entry: Entry) {

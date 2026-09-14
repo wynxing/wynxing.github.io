@@ -5,7 +5,7 @@ import GiscusComments from '../components/GiscusComments.astro';
 import TableOfContents from '../components/TableOfContents.astro';
 import { formatDate, readingTime, tagHref, byDateDesc, entryHref, categoryLabel, statusLabel } from '../utils/content';
 
-type Entry = CollectionEntry<'blog'> | CollectionEntry<'notes'> | CollectionEntry<'projects'>;
+type Entry = CollectionEntry<'blog'> | CollectionEntry<'projects'>;
 
 interface Props {
   entry: Entry;
@@ -17,7 +17,7 @@ const body = 'body' in entry ? entry.body : '';
 const minutes = readingTime(body);
 const isProject = entry.collection === 'projects';
 const project = isProject ? entry.data : null;
-const section = entry.collection === 'blog' ? '文章' : entry.collection === 'notes' ? '笔记' : '项目';
+const section = entry.collection === 'blog' ? '文章' : '项目';
 const siblings = byDateDesc(await getCollection(entry.collection, ({ data }) => !data.draft));
 const position = siblings.findIndex(sibling => sibling.id === entry.id);
 const previous = siblings[position + 1];

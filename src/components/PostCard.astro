@@ -7,7 +7,7 @@ const category = 'category' in entry.data ? entry.data.category : '';
 <article class:list={['post-card', `post-${variant}`]} data-pagefind-ignore data-entry-card data-tags={JSON.stringify(entry.data.tags)} data-category={category}>
 
   <div class="card-content">
-    <div class="card-meta"><span class="card-category">{category ? categoryLabel(category) : entry.collection === 'notes' ? '随手记' : '项目记录'}</span><time datetime={entry.data.date.toISOString()}>{formatDate(entry.data.date)}</time><span>{readingTime(entry.body)}</span></div>
+    <div class="card-meta"><span class="card-category">{category ? categoryLabel(category) : '项目记录'}</span><time datetime={entry.data.date.toISOString()}>{formatDate(entry.data.date)}</time><span>{readingTime(entry.body)}</span></div>
     <h2><a class="card-link" href={entryHref(entry)}>{entry.data.title}</a></h2>
     <p class="card-description">{entry.data.description}</p>
     {'status' in entry.data && <p class="project-status">{statusLabel(entry.data.status)}{entry.data.stack.length > 0 && <> · {entry.data.stack.join(' / ')}</>}</p>}

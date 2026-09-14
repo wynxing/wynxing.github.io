@@ -315,12 +315,12 @@ test("tag filtering preserves commas and combines category with tag", () => {
   assert.equal(tag.value, "absent");
 });
 
-test("summer desktop exposes five real routes, one latest article and one persistent player", () => {
+test("summer desktop exposes four real routes, one latest article and one persistent player", () => {
   const html = read("dist/index.html");
   const dock = html.match(/<nav class="desktop-dock[\s\S]*?<\/nav>/)[0];
   assert.deepEqual(
     [...dock.matchAll(/href="([^"]+)"/g)].map((m) => m[1]),
-    ["/blog/", "/projects/", "/notes/", "/about/", "/search/"],
+    ["/blog/", "/projects/", "/about/", "/search/"],
   );
   assert.equal((html.match(/data-latest-entry/g) || []).length, 1);
   assert.equal((html.match(/<audio /g) || []).length, 1);
@@ -335,4 +335,16 @@ test("summer desktop exposes five real routes, one latest article and one persis
     "night-mobile.webp",
   ])
     assert.ok(existsSync(resolve(root, "dist/images/summer", file)));
+});
+
+test("removed notes leave no generated routes or links and inner navigation matches the Dock", () => {
+  assert.equal(existsSync(resolve(root, "dist/notes")), false);
+  const expected = ["/blog/", "/projects/", "/about/", "/search/"];
+  const html = read("dist/blog/index.html");
+  const nav = html.match(/<nav class="desktop-nav"[\s\S]*?<\/nav>/)[0];
+  assert.deepEqual([...nav.matchAll(/href="([^"]+)"/g)].map(m => m[1]), expected);
+  for (const file of readdirSync(resolve(root, "dist"), { recursive: true })) {
+    if (!/\.(html|xml)$/.test(file)) continue;
+    assert.doesNotMatch(read(`dist/${file}`), /(?:href=["'][^"']*\/notes(?:\/|["'])|<loc>[^<]*\/notes(?:\/|<))/);
+  }
 });

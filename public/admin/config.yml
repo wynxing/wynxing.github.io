@@ -39,24 +39,6 @@ collections:
       - { label: 分类, name: category, widget: select, options: [Tech, Projects, Thoughts, Learning], default: Tech }
       - { label: 正文, name: body, widget: markdown }
 
-  - name: notes
-    label: 笔记
-    label_singular: 笔记
-    folder: src/content/notes
-    create: true
-    format: yaml-frontmatter
-    extension: md
-    slug: "{{slug}}"
-    fields:
-      - { label: 标题, name: title, widget: string }
-      - { label: 摘要, name: description, widget: text }
-      - { label: 日期, name: date, widget: datetime, date_format: yyyy-MM-dd, time_format: false, picker_utc: true }
-      - { label: 更新日期, name: updated, widget: datetime, date_format: yyyy-MM-dd, time_format: false, picker_utc: true, required: false }
-      - { label: 标签, name: tags, widget: list, required: false }
-      - { label: 草稿, name: draft, widget: boolean, default: false }
-      - { label: 心情, name: mood, widget: select, options: [Log, Idea, Clip, Bug, Study], default: Log }
-      - { label: 正文, name: body, widget: markdown }
-
   - name: projects
     label: 项目
     label_singular: 项目
