@@ -57,15 +57,15 @@ use full navigation. No frontend framework was added.
 ### Configure music
 
 Edit `src/data/music.ts`. Each track has `id`, `title`, `artist`, `src` and an
-optional `cover`. Use unique stable IDs, local `/music/...` assets under `public/`,
-or stable HTTPS audio URLs. Remote audio hosts must allow direct playback;
-HTTP range requests are recommended for reliable seeking. Cover images are
-optional and fall back to a music icon on failure.
+optional `cover`. Use unique stable IDs and local `/music/...` files in
+`public/music/`. The current playlist is six CC0 instrumental tracks. Titles,
+artists, source pages and licenses are listed in [MUSIC.md](MUSIC.md). Cover
+images are optional and fall back to a music icon on failure.
 
-The production playlist is intentionally empty and displays “歌单准备中”.
 Playback starts only after a visitor presses play. Internal navigation preserves
 playback and volume; a refresh does not autoplay. Single-track playlists disable
-track switching; multi-track playlists wrap. Failed audio can be retried.
+track switching; multi-track playlists wrap. Failed audio can be retried. An
+empty playlist displays “歌单准备中” and disables playback.
 
 ### Validate
 
@@ -78,8 +78,9 @@ cleanup. Test-only real audio is available with:
 python tests/serve_audio_fixture.py --port 4322
 ```
 
-This loopback-only server serves the existing build and injects test tracks into
-responses, without editing source or `dist`. Its third track fails once, then
+This loopback-only server serves the existing build and replaces the production
+playlist in HTML responses with test tracks, without editing source or `dist`.
+Its third track fails once, then
 succeeds on retry; restarting the server resets this scenario. The synthesized
 audio is not part of the public website or production playlist.
 

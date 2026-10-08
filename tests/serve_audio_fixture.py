@@ -6,6 +6,7 @@ import html
 import io
 import json
 import math
+import re
 from pathlib import Path
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 import struct
@@ -47,7 +48,8 @@ class Handler(SimpleHTTPRequestHandler):
   path=Path(self.translate_path(self.path))
   if path.is_dir():path=path/'index.html'
   if path.suffix=='.html' and path.is_file():
-   content=path.read_text('utf-8').replace('data-playlist="[]"','data-playlist="'+html.escape(json.dumps(TRACKS,ensure_ascii=False),quote=True)+'"')
+   injected='data-playlist="'+html.escape(json.dumps(TRACKS,ensure_ascii=False),quote=True)+'"'
+   content=re.sub(r'data-playlist="[^"]*"',injected,path.read_text('utf-8'),count=1)
    data=content.encode('utf-8');self.send_response(200);self.send_header('Content-Type','text/html; charset=utf-8');self.send_header('Content-Length',str(len(data)));self.send_header('Cache-Control','no-store');self.end_headers();self.wfile.write(data);return
   super().do_GET()
 if __name__=='__main__':
