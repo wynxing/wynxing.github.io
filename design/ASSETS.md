@@ -36,3 +36,7 @@ content is not real site content. Article surfaces prioritize readability.
 ## 项目截图
 
 - `public/images/projects/maydolist-focus.png`：来自 Wynn 的 MayDolist 仓库 `docs/screenshots/focus-demo.png`，展示真实 Vue + Tauri 界面与内置脱敏 Demo 数据。来源：[MayDolist 截图说明](https://github.com/wynxing/MayDolist#demo-截图)。不代表真实用户或工作内容。
+
+## 音乐
+
+播放器曲目是 CC0 纯音乐，文件在 `public/music/`。每首的作者、来源页面和许可见 [MUSIC.md](../MUSIC.md)。

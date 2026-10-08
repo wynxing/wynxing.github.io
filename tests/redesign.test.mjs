@@ -325,8 +325,24 @@ test("summer desktop exposes four real routes, one latest article and one persis
   assert.equal((html.match(/data-latest-entry/g) || []).length, 1);
   assert.equal((html.match(/<audio /g) || []).length, 1);
   assert.ok(html.includes('data-astro-transition-persist="summer-music"'));
-  assert.ok(html.includes('data-playlist="[]"'));
-  assert.ok(html.includes("歌单准备中"));
+  const playlist = JSON.parse(
+    html
+      .match(/data-playlist="([^"]*)"/)[1]
+      .replaceAll("&quot;", '"')
+      .replaceAll("&#39;", "'")
+      .replaceAll("&amp;", "&"),
+  );
+  assert.ok(playlist.length >= 4 && playlist.length <= 6);
+  assert.equal(playlist[0].title, "First Light Particles");
+  assert.ok(html.includes("First Light Particles"));
+  assert.ok(html.includes("曲目已以 CC0 奉献至公共领域。"));
+  for (const track of playlist) {
+    assert.match(track.src, /^\/music\/[a-z0-9-]+\.mp3$/);
+    assert.equal(track.title.length > 0 && track.artist.length > 0, true);
+    const file = resolve(root, "dist", track.src.slice(1));
+    assert.equal(existsSync(file), true);
+    assert.ok(readFileSync(file).length < 6_000_000);
+  }
   assert.equal((html.match(/data-entry-card/g) || []).length, 0);
   for (const file of [
     "day.webp",
