@@ -28,6 +28,7 @@ const projects = defineCollection({
     repo: z.url().optional(),
     demo: z.url().optional(),
     status: z.enum(['building', 'paused', 'shipped', 'archived']).default('building'),
+    version: z.string().optional(),
   }),
 });
 

@@ -61,4 +61,5 @@ collections:
       - { label: 仓库, name: repo, widget: string, required: false, hint: 完整 URL }
       - { label: 演示, name: demo, widget: string, required: false, hint: 完整 URL }
       - { label: 状态, name: status, widget: select, options: [building, paused, shipped, archived], default: building }
+      - { label: 版本, name: version, widget: string, required: false, hint: 显示在状态后面，例如 v0.1.0；没有则留空 }
       - { label: 正文, name: body, widget: markdown }

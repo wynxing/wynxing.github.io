@@ -3,7 +3,7 @@ import { getCollection, type CollectionEntry } from 'astro:content';
 import BaseLayout from './BaseLayout.astro';
 import GiscusComments from '../components/GiscusComments.astro';
 import TableOfContents from '../components/TableOfContents.astro';
-import { formatDate, readingTime, tagHref, byDateDesc, byProjectOrder, entryHref, categoryLabel, statusLabel } from '../utils/content';
+import { formatDate, readingTime, tagHref, byDateDesc, byProjectOrder, entryHref, categoryLabel, statusWithVersion } from '../utils/content';
 
 type Entry = CollectionEntry<'blog'> | CollectionEntry<'projects'>;
 
@@ -43,7 +43,7 @@ const next = isProject ? siblings[position + 1] : siblings[position - 1];
         {entry.data.updated && <span>更新 {formatDate(entry.data.updated)}</span>}
         {'category' in entry.data && <span>{categoryLabel(entry.data.category)}</span>}
         {'mood' in entry.data && <span>{entry.data.mood}</span>}
-        {'status' in entry.data && <span>{statusLabel(entry.data.status)}</span>}
+        {'status' in entry.data && <span>{statusWithVersion(entry.data.status, project?.version)}</span>}
       </div>
       {project?.role && <p class="project-role">{project.role}</p>}
       {project?.highlight && <p class="project-highlight"><span>代表成果</span>{project.highlight}</p>}
