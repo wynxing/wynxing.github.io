@@ -1,5 +1,5 @@
 ---
-import { entryHref, formatDate, readingTime, categoryLabel, statusLabel, type Entry } from '../utils/content';
+import { entryHref, formatDate, readingTime, categoryLabel, statusWithVersion, type Entry } from '../utils/content';
 interface Props { entry: Entry; variant?: 'list' | 'project'; }
 const { entry, variant = entry.collection === 'projects' ? 'project' : 'list' } = Astro.props;
 const project = entry.collection === 'projects' ? entry.data : null;
@@ -14,7 +14,7 @@ const category = 'category' in entry.data ? entry.data.category : '';
     {project?.role && <p class="project-role">{project.role}</p>}
     {project?.highlight && <p class="project-highlight"><span>代表成果</span>{project.highlight}</p>}
     {project && <span class="project-detail-link">查看项目详情 ↗</span>}
-    {'status' in entry.data && <p class="project-status">{statusLabel(entry.data.status)}{entry.data.stack.length > 0 && <> · {entry.data.stack.join(' / ')}</>}</p>}
+    {'status' in entry.data && <p class="project-status">{statusWithVersion(entry.data.status, entry.data.version)}{entry.data.stack.length > 0 && <> · {entry.data.stack.join(' / ')}</>}</p>}
     {(('repo' in entry.data && entry.data.repo) || ('demo' in entry.data && entry.data.demo)) && <div class="card-extras">
       {'repo' in entry.data && entry.data.repo && <a class="card-extra" href={entry.data.repo} target="_blank" rel="noreferrer">仓库 ↗</a>}
       {'demo' in entry.data && entry.data.demo && <a class="card-extra" href={entry.data.demo} target="_blank" rel="noreferrer">演示 ↗</a>}

@@ -60,6 +60,11 @@ export function statusLabel(status: string) {
   return ({ building: '进行中', paused: '已暂停', shipped: '已发布', archived: '已归档' } as Record<string, string>)[status] ?? status;
 }
 
+export function statusWithVersion(status: string, version?: string) {
+  const label = statusLabel(status);
+  return version ? `${label} ${version}` : label;
+}
+
 export function isCurrentPath(pathname: string, href: string) {
   if (href === '/') {
     return pathname === '/' || pathname === '';
