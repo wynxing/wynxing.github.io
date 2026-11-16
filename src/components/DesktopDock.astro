@@ -10,6 +10,10 @@ const links = [
 ---
 <nav class="desktop-dock glass" aria-label="板块入口">
   {links.map(item => <a href={item.href} class="dock-item" aria-current={isCurrentPath(Astro.url.pathname, item.href) ? 'page' : undefined}>
-    <span class={`dock-icon icon-${item.color}`}><AppIcon name={item.icon}/></span><span class="dock-label">{item.title}</span>
+    <span class={`dock-icon icon-${item.color}`}>
+      <span class="dock-gloss" aria-hidden="true"></span>
+      <AppIcon name={item.icon}/>
+    </span>
+    <span class="dock-label">{item.title}</span>
   </a>)}
 </nav>
