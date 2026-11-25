@@ -41,6 +41,24 @@ onPage((signal, cleanup) => {
   const stationDirs = stationEls.map((el) =>
     el.classList.contains("is-above") ? -1 : 1,
   );
+  const hasAbove = stationEls.map(
+    (el, idx) =>
+      el.classList.contains("is-above") ||
+      mirrorEls.some(
+        (m) =>
+          Number(m.dataset.pulseMirror) === idx &&
+          m.classList.contains("is-above"),
+      ),
+  );
+  const hasBelow = stationEls.map(
+    (el, idx) =>
+      el.classList.contains("is-below") ||
+      mirrorEls.some(
+        (m) =>
+          Number(m.dataset.pulseMirror) === idx &&
+          m.classList.contains("is-below"),
+      ),
+  );
 
   // Inertial horizontal scroll state
   let currentX = 0;
@@ -616,25 +634,6 @@ onPage((signal, cleanup) => {
     }
     ctx.stroke();
 
-    // Giant sculptural faint watermark typography drifting in background parallax
-    ctx.save();
-    ctx.fillStyle = isDark ? "rgba(255,255,255,0.026)" : "rgba(10,10,10,0.034)";
-    ctx.font = '600 120px "Iowan Old Style", "Songti SC", Georgia, serif';
-    ctx.textBaseline = "middle";
-    const watermarks = [
-      { text: "SAVE", x: 110, y: midY - 140 },
-      { text: "POINT", x: 520, y: midY + 148 },
-      { text: "SIGNAL", x: 1020, y: midY - 140 },
-      { text: "2026", x: 1480, y: midY + 148 },
-    ];
-    for (const wm of watermarks) {
-      const sx = wm.x - parallaxX;
-      if (sx > -500 && sx < width + 200) {
-        ctx.fillText(wm.text, sx, wm.y);
-      }
-    }
-    ctx.restore();
-
     // Fine centerline oscilloscope ruler ticks
     const tickSpacing = 24;
     const firstTick = Math.floor(currentX / tickSpacing) * tickSpacing;
@@ -788,14 +787,14 @@ onPage((signal, cleanup) => {
       ctx.restore();
     }
 
-    // Dual dynamic stems (connecting BOTH above block and below mirror block to exact wave anchor)
+    // Dynamic stems connecting existing above/below blocks to exact wave anchor
     const stemEdgeOffset = window.innerHeight <= 750 ? 38 : 52;
     stationPositions.forEach((worldSx, idx) => {
       const screenSx = worldSx - currentX;
       if (screenSx < -40 || screenSx > width + 40) return;
       const anchorY = sampleY(screenSx);
-      const topEdgeY = midY - stemEdgeOffset;
-      const bottomEdgeY = midY + stemEdgeOffset;
+      const topEdgeY = hasAbove[idx] ? midY - stemEdgeOffset : anchorY;
+      const bottomEdgeY = hasBelow[idx] ? midY + stemEdgeOffset : anchorY;
       const isActive = hoveredStation === idx || pinnedStation === idx;
 
       ctx.beginPath();
