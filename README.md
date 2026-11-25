@@ -1,8 +1,8 @@
 # Wynn's Save Point
 
-Wynn 的个人网站：一个可以认识 Wynn、看看他的作品、读文章，也可以顺着脉搏时间线停留片刻的个人主页。文章是其中一个板块，首页以个人身份、心率脉冲时间线与顶部悬浮音乐胶囊组织体验。
+Wynn 的个人网站：一个可以认识 Wynn、看看他的作品、读文章，也可以在实时物理心率线上停留、听歌并交互的个人主页。文章是其中一个板块，首页以高对比无框雕塑排版、顶部悬浮硬件感音频面板与实时 Canvas 脉搏线组织体验。
 
-当前视觉方向为「纸墨脉搏」（温润纸白浅色 / 中性炭黑深色、细线边框、顶部悬浮音乐胶囊、水平滑动心率线与上下交替分布的节点；手机端自动转为纵向脉搏脊线）。保留站名、黑猫头像和真实内容。
+当前视觉方向为「Live Physical Signal」（浅色粉笔白 / 深色极夜黑 + 精密信号橙、全站去卡片边框、顶部悬浮 Web Audio 联动硬件播放器、鼠标可拨动且随滚轮速度改变 BPM 的物理心率线；手机端转为左侧纵向脉搏脊线）。保留站名、黑猫头像和真实内容。
 
 ## 当前定位与文档入口
 
@@ -41,16 +41,18 @@ pnpm deploy
 
 ## Appearance and reading
 
-The homepage is built around a quiet archival paper (light) and neutral obsidian
-charcoal (dark) system: a slim top utility bar, a centered floating music
-capsule, the original pixel black-cat avatar, and a horizontal ECG pulse line
-with five alternating Save Point nodes above and below the trace. Inner pages
-use distraction-free vertical reading layouts with hairline structure, serif
-headings, and monospace metadata. The default theme follows the OS; explicit
-choices persist under the existing `theme` key. Mobile layouts rotate the
-horizontal trace into a vertical heartbeat spine and keep a compact collapsible
-top music capsule. Reduced-motion and reduced-transparency preferences are
-respected.
+The homepage is a borderless high-contrast gallery (`#f5f5f3` light / `#070707`
+dark with `#e63e00` / `#ff4d00` signal orange accents): a slim top utility bar,
+a centered Braun-inspired floating audio deck wired into Web Audio `AnalyserNode`,
+the original pixel black-cat avatar, and a live 60fps HTML5 Canvas heartbeat
+instrument with five borderless stations anchored above and below the trace.
+Desktop scrolling uses damped spring inertia and modulates live BPM, cursor
+proximity plucks the string physics, and station hover creates localized wave
+resonance. Inner pages render directly on the full-bleed canvas with serif
+headings and monospace metadata. The default theme follows the OS; explicit
+choices persist under `theme`. Mobile layouts draw a live vertical pulse spine
+along the left margin and keep a compact collapsible top audio deck.
+Reduced-motion and reduced-transparency preferences are respected.
 
 Astro ClientRouter preserves a single audio element across internal navigation.
 Page-scoped listeners, search instances and observers are released before swaps

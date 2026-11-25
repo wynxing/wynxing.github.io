@@ -3,6 +3,7 @@ import AppIcon from './AppIcon.astro';
 import { playlist } from '../data/music';
 
 const opening = playlist[0];
+const totalTracks = String(playlist.length).padStart(2, '0');
 ---
 <section class="music-player" data-music-player data-playlist={JSON.stringify(playlist)} transition:persist="save-point-music" aria-label="音乐播放器">
   <audio preload="none" data-audio></audio>
@@ -10,10 +11,20 @@ const opening = playlist[0];
     <div class="music-cover">
       <img data-cover alt="" hidden/>
       <AppIcon name="music-notes"/>
-      <span class="music-wave" aria-hidden="true"><i></i><i></i><i></i></span>
+      <span class="deck-led" aria-hidden="true"></span>
+      <span class="deck-bars" aria-hidden="true">
+        <i data-eq-bar></i>
+        <i data-eq-bar></i>
+        <i data-eq-bar></i>
+        <i data-eq-bar></i>
+        <i data-eq-bar></i>
+      </span>
     </div>
     <div class="music-meta">
-      <span class="small-label">AUDIO SIGNAL</span>
+      <div class="deck-topline">
+        <span class="small-label">CH-01 // AUDIO</span>
+        <span class="deck-index" data-track-index>{opening ? `01/${totalTracks}` : "00/00"}</span>
+      </div>
       <strong data-track-title>{opening ? opening.title : "歌单准备中"}</strong>
       <span data-track-artist>{opening ? opening.artist : "留一点时间，听听喜欢的声音。"}</span>
     </div>

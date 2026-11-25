@@ -22,6 +22,108 @@ const report = (message: string) => {
   error.textContent = message;
 };
 
+let audioCtx: AudioContext | null = null;
+let analyser: AnalyserNode | null = null;
+let freqData: Uint8Array<ArrayBuffer> | null = null;
+let timeData: Uint8Array<ArrayBuffer> | null = null;
+let eqRaf = 0;
+
+function ensureWebAudio() {
+  if (
+    typeof window === "undefined" ||
+    typeof HTMLMediaElement === "undefined" ||
+    !(audio instanceof HTMLMediaElement)
+  ) {
+    return;
+  }
+  const Ctx =
+    window.AudioContext ||
+    (window as unknown as { webkitAudioContext?: typeof AudioContext })
+      .webkitAudioContext;
+  if (!Ctx) return;
+  if (!audioCtx) {
+    try {
+      audioCtx = new Ctx();
+      const source = audioCtx.createMediaElementSource(audio);
+      analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 128;
+      analyser.smoothingTimeConstant = 0.82;
+      source.connect(analyser);
+      analyser.connect(audioCtx.destination);
+      freqData = new Uint8Array(analyser.frequencyBinCount);
+      timeData = new Uint8Array(analyser.fftSize);
+    } catch {
+      audioCtx = null;
+      analyser = null;
+    }
+  }
+  if (audioCtx && audioCtx.state === "suspended") {
+    void audioCtx.resume().catch(() => {});
+  }
+}
+
+function getLevel(): number {
+  if (audio.paused) return 0;
+  if (!analyser || !timeData) return 0.32;
+  analyser.getByteTimeDomainData(timeData);
+  let sum = 0;
+  for (let i = 0; i < timeData.length; i++) {
+    const sample = (timeData[i] - 128) / 128;
+    sum += sample * sample;
+  }
+  return Math.min(1, Math.sqrt(sum / timeData.length) * 3.4);
+}
+
+function getBins(): Uint8Array<ArrayBuffer> | null {
+  if (audio.paused || !analyser || !freqData) return null;
+  analyser.getByteFrequencyData(freqData);
+  return freqData;
+}
+
+if (typeof window !== "undefined") {
+  (
+    window as unknown as {
+      __pulseAudio?: {
+        isPlaying: () => boolean;
+        getLevel: () => number;
+        getBins: () => Uint8Array<ArrayBuffer> | null;
+      };
+    }
+  ).__pulseAudio = {
+    isPlaying: () => !audio.paused,
+    getLevel,
+    getBins,
+  };
+}
+
+function updateEqBars(now = 0) {
+  if (typeof player.querySelectorAll !== "function") return;
+  const bars = player.querySelectorAll<HTMLElement>("[data-eq-bar]");
+  if (!bars.length) return;
+  const reduced =
+    typeof matchMedia === "function" &&
+    matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (audio.paused || reduced || (typeof document !== "undefined" && document.hidden)) {
+    bars.forEach((bar) => {
+      bar.style.transform = "scaleY(0.24)";
+    });
+    eqRaf = 0;
+    return;
+  }
+  const bins = getBins();
+  bars.forEach((bar, i) => {
+    let val = 0.28 + 0.45 * Math.abs(Math.sin(now * 0.005 + i * 1.1));
+    if (bins) {
+      const binVal = bins[Math.min(bins.length - 1, 2 + i * 5)] / 255;
+      if (binVal > 0.02) val = 0.22 + binVal * 0.78;
+    }
+    bar.style.transform = `scaleY(${val.toFixed(2)})`;
+  });
+  if (typeof requestAnimationFrame === "function") {
+    eqRaf = requestAnimationFrame(updateEqBars);
+  }
+}
+
 function render() {
   const active = tracks[index];
   play.disabled = !active;
@@ -32,6 +134,12 @@ function render() {
   play.dataset.playing = String(!audio.paused);
   if (typeof document !== "undefined" && document.documentElement?.dataset) {
     document.documentElement.dataset.musicPlaying = String(!audio.paused);
+  }
+  const idxEl = get("track-index");
+  if (idxEl) {
+    idxEl.textContent = tracks.length
+      ? `${String(index + 1).padStart(2, "0")}/${String(tracks.length).padStart(2, "0")}`
+      : "00/00";
   }
   get("pause").hidden = audio.paused;
   seek.disabled =
@@ -49,10 +157,18 @@ function render() {
     : !active
       ? "此刻歌单"
       : audio.paused
-        ? "按下播放，慢慢听。"
-        : "正在播放";
+        ? "SIGNAL READY"
+        : "ON AIR";
   get<HTMLButtonElement>("prev").disabled = tracks.length < 2;
   get<HTMLButtonElement>("next").disabled = tracks.length < 2;
+
+  if (!audio.paused && !eqRaf && typeof requestAnimationFrame === "function") {
+    eqRaf = requestAnimationFrame(updateEqBars);
+  } else if (audio.paused && eqRaf && typeof cancelAnimationFrame === "function") {
+    cancelAnimationFrame(eqRaf);
+    eqRaf = 0;
+    updateEqBars();
+  }
 }
 
 function selectTrack(next: number) {
@@ -80,6 +196,7 @@ async function start() {
   failed = false;
   loading = true;
   report("");
+  ensureWebAudio();
   if (audio.error) audio.load();
   render();
   try {

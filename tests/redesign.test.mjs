@@ -323,7 +323,7 @@ test("pulse homepage exposes four real routes, one latest article, five stations
     ["/blog/", "/projects/", "/about/", "/search/"],
   );
   assert.ok(html.includes("data-pulse-viewport"));
-  assert.ok(html.includes("data-pulse-progress-path"));
+  assert.ok(html.includes("data-pulse-canvas"));
   assert.equal((html.match(/data-station-jump=/g) || []).length, 5);
   assert.equal((html.match(/data-latest-entry/g) || []).length, 1);
   assert.equal((html.match(/<audio /g) || []).length, 1);

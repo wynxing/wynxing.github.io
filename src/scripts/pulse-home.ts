@@ -1,30 +1,75 @@
 import { onPage } from "./lifecycle";
 
-onPage((signal, cleanup) => {
-  const viewport = document.querySelector<HTMLElement>("[data-pulse-viewport]");
-  if (!viewport) return;
+interface PulseAudioBridge {
+  isPlaying: () => boolean;
+  getLevel: () => number;
+  getBins: () => Uint8Array | null;
+}
 
-  const progressPath = document.querySelector<SVGPathElement>(
-    "[data-pulse-progress-path]",
-  );
+onPage((signal, cleanup) => {
+  const viewportEl = document.querySelector<HTMLElement>("[data-pulse-viewport]");
+  const stageEl = document.querySelector<HTMLElement>("[data-pulse-stage]");
+  const canvasEl = document.querySelector<HTMLCanvasElement>("[data-pulse-canvas]");
+  if (!viewportEl || !stageEl || !canvasEl) return;
+
+  const ctxRaw = canvasEl.getContext("2d");
+  if (!ctxRaw) return;
+
+  const viewport: HTMLElement = viewportEl;
+  const stage: HTMLElement = stageEl;
+  const canvas: HTMLCanvasElement = canvasEl;
+  const ctx: CanvasRenderingContext2D = ctxRaw;
+
   const progressBar = document.querySelector<HTMLElement>("[data-pulse-bar]");
-  const liveDot = document.querySelector<SVGCircleElement>("[data-pulse-dot]");
-  const liveHalo = document.querySelector<SVGCircleElement>("[data-pulse-halo]");
+  const bpmEl = document.querySelector<HTMLElement>("[data-pulse-bpm]");
+  const stationEls = [
+    ...document.querySelectorAll<HTMLElement>("[data-pulse-station]"),
+  ];
   const stationBtns = [
     ...document.querySelectorAll<HTMLButtonElement>("[data-station-jump]"),
   ];
+
   const desktopQuery = matchMedia("(min-width: 900px)");
   const reducedMotionQuery = matchMedia("(prefers-reduced-motion: reduce)");
-  const stageWidth = 2460;
+  const stageWidth = 2860;
+  const stationPositions = stationEls.map((el) =>
+    Number(el.dataset.stationX || 0),
+  );
+  const stationDirs = stationEls.map((el) =>
+    el.classList.contains("is-above") ? -1 : 1,
+  );
 
-  let pathLength = 0;
-  if (progressPath) {
-    pathLength = progressPath.getTotalLength();
-    progressPath.style.strokeDasharray = `${pathLength} ${pathLength}`;
-    progressPath.style.strokeDashoffset = String(pathLength);
-  }
-
+  // Inertial horizontal scroll state
+  let currentX = 0;
+  let targetX = 0;
+  let scrollVelocity = 0;
   let pinnedStation: number | null = null;
+  let hoveredStation: number | null = null;
+  const stationBoost = stationEls.map(() => 0);
+
+  // 1D spring-damper string physics across viewport width
+  const STRING_N = 160;
+  const disp = new Float32Array(STRING_N);
+  const vel = new Float32Array(STRING_N);
+
+  // Pointer telemetry on canvas
+  let pointerActive = false;
+  let pointerX = 0;
+  let pointerY = 0;
+  let prevPointerY = 0;
+  let width = 0;
+  let height = 0;
+  let dpr = 1;
+  let rafId = 0;
+  let lastTime = 0;
+  let sweepPhase = 0;
+  let beatClock = 0;
+  let lastBpmText = "";
+  let mobileScrollSpeed = 0;
+  let lastWindowScrollY = typeof window !== "undefined" ? window.scrollY : 0;
+
+  const getMaxScroll = () => Math.max(0, stageWidth - viewport.clientWidth);
+
   const setActiveStation = (activeIndex: number) => {
     stationBtns.forEach((btn, idx) => {
       if (idx === activeIndex) btn.setAttribute("aria-current", "true");
@@ -32,19 +77,10 @@ onPage((signal, cleanup) => {
     });
   };
 
-  let syncQueued = false;
-  const syncScrollUI = () => {
-    syncQueued = false;
-    if (signal.aborted) return;
-
-    const maxScroll = Math.max(0, viewport.scrollWidth - viewport.clientWidth);
-    const ratio = maxScroll > 0 ? Math.min(1, Math.max(0, viewport.scrollLeft / maxScroll)) : 1;
-
-    if (progressPath && pathLength > 0) {
-      const startReach = Math.min(1, (viewport.clientWidth * 0.45) / stageWidth);
-      const frac = startReach + (1 - startReach) * ratio;
-      progressPath.style.strokeDashoffset = String(pathLength * (1 - frac));
-    }
+  const syncRailUI = () => {
+    const maxScroll = getMaxScroll();
+    const ratio =
+      maxScroll > 0 ? Math.min(1, Math.max(0, currentX / maxScroll)) : 1;
 
     if (progressBar) {
       progressBar.style.transform = `scaleX(${Math.max(0.06, ratio)})`;
@@ -52,14 +88,13 @@ onPage((signal, cleanup) => {
 
     if (stationBtns.length > 0 && pinnedStation === null) {
       let activeIndex = 0;
-      if (maxScroll > 0 && viewport.scrollLeft >= maxScroll - 4) {
+      if (maxScroll > 0 && currentX >= maxScroll - 6) {
         activeIndex = stationBtns.length - 1;
-      } else if (viewport.scrollLeft > 4) {
-        const viewCenter = viewport.scrollLeft + viewport.clientWidth * 0.5;
+      } else if (currentX > 6) {
+        const viewCenter = currentX + viewport.clientWidth * 0.5;
         let bestDist = Infinity;
-        stationBtns.forEach((btn, idx) => {
-          const x = Number(btn.dataset.stationX || 0);
-          const dist = Math.abs(x - viewCenter);
+        stationPositions.forEach((sx, idx) => {
+          const dist = Math.abs(sx - viewCenter);
           if (dist < bestDist) {
             bestDist = dist;
             activeIndex = idx;
@@ -70,59 +105,83 @@ onPage((signal, cleanup) => {
     }
   };
 
-  const queueSync = () => {
-    if (!syncQueued) {
-      syncQueued = true;
-      requestAnimationFrame(syncScrollUI);
-    }
-  };
-
   const scrollToStation = (index: number) => {
     const clamped = Math.max(0, Math.min(stationBtns.length - 1, index));
-    const btn = stationBtns[clamped];
-    if (!btn) return;
+    const sx = stationPositions[clamped];
+    if (sx === undefined) return;
     pinnedStation = clamped;
     setActiveStation(clamped);
-    const x = Number(btn.dataset.stationX || 0);
-    const target = Math.max(
-      0,
-      Math.min(
-        viewport.scrollWidth - viewport.clientWidth,
-        x - viewport.clientWidth * 0.5,
-      ),
-    );
-    viewport.scrollTo({
-      left: target,
-      behavior: reducedMotionQuery.matches ? "auto" : "smooth",
-    });
+    const maxScroll = getMaxScroll();
+    targetX = Math.max(0, Math.min(maxScroll, sx - viewport.clientWidth * 0.5));
+    if (reducedMotionQuery.matches) {
+      currentX = targetX;
+      stage.style.transform = `translate3d(${-currentX.toFixed(2)}px, 0, 0)`;
+      syncRailUI();
+    }
   };
 
   stationBtns.forEach((btn, idx) => {
     btn.addEventListener("click", () => scrollToStation(idx), { signal });
   });
 
-  // Translate vertical wheel to horizontal scroll on desktop
+  // Hover resonance & gallery focus dimming
+  stationEls.forEach((el, idx) => {
+    const enter = () => {
+      hoveredStation = idx;
+      stage.classList.add("has-hover");
+      el.classList.add("is-focused");
+    };
+    const leave = () => {
+      if (hoveredStation === idx) hoveredStation = null;
+      el.classList.remove("is-focused");
+      if (hoveredStation === null) stage.classList.remove("has-hover");
+    };
+    el.addEventListener("pointerenter", enter, { signal });
+    el.addEventListener("pointerleave", leave, { signal });
+    el.addEventListener(
+      "focusin",
+      () => {
+        enter();
+        if (desktopQuery.matches) {
+          const sx = stationPositions[idx] ?? 0;
+          const viewLeft = currentX + 120;
+          const viewRight = currentX + viewport.clientWidth - 120;
+          if (sx < viewLeft || sx > viewRight) {
+            scrollToStation(idx);
+          }
+        }
+      },
+      { signal },
+    );
+    el.addEventListener("focusout", leave, { signal });
+  });
+
+  // Wheel -> inertial horizontal target
   viewport.addEventListener(
     "wheel",
     (event) => {
       if (!desktopQuery.matches) return;
-      const maxScroll = viewport.scrollWidth - viewport.clientWidth;
+      const maxScroll = getMaxScroll();
       if (maxScroll <= 0) return;
+      event.preventDefault();
       pinnedStation = null;
-      if (Math.abs(event.deltaY) > Math.abs(event.deltaX)) {
-        event.preventDefault();
-        viewport.scrollLeft += event.deltaY;
-      }
+      const delta =
+        Math.abs(event.deltaY) >= Math.abs(event.deltaX)
+          ? event.deltaY
+          : event.deltaX;
+      targetX = Math.max(0, Math.min(maxScroll, targetX + delta * 1.15));
     },
     { passive: false, signal },
   );
 
-  // Drag-to-pan on non-interactive surface
+  // Drag-to-pan with throw momentum
   let dragging = false;
   let pointerId = -1;
-  let startX = 0;
-  let startScrollLeft = 0;
-  let moved = false;
+  let dragStartX = 0;
+  let dragStartTarget = 0;
+  let dragLastX = 0;
+  let dragVelocity = 0;
+  let dragMoved = false;
 
   viewport.addEventListener(
     "pointerdown",
@@ -132,10 +191,12 @@ onPage((signal, cleanup) => {
       if (target?.closest("a, button, input, select, label")) return;
       pinnedStation = null;
       dragging = true;
-      moved = false;
+      dragMoved = false;
       pointerId = event.pointerId;
-      startX = event.clientX;
-      startScrollLeft = viewport.scrollLeft;
+      dragStartX = event.clientX;
+      dragLastX = event.clientX;
+      dragStartTarget = targetX;
+      dragVelocity = 0;
     },
     { signal },
   );
@@ -143,15 +204,45 @@ onPage((signal, cleanup) => {
   viewport.addEventListener(
     "pointermove",
     (event) => {
+      const rect = viewport.getBoundingClientRect();
+      pointerActive = true;
+      prevPointerY = pointerY || event.clientY - rect.top;
+      pointerX = event.clientX - rect.left;
+      pointerY = event.clientY - rect.top;
+
+      // Pluck the string physically if cursor moves near the midline
+      if (desktopQuery.matches && !reducedMotionQuery.matches && width > 0) {
+        const midY = height * 0.5;
+        const distY = Math.abs(pointerY - midY);
+        const dy = pointerY - prevPointerY;
+        if (distY < 54 && Math.abs(dy) > 0.6) {
+          const normX = Math.max(0, Math.min(1, pointerX / width));
+          const centerIdx = normX * (STRING_N - 1);
+          const impulse = Math.max(-16, Math.min(16, dy * 0.85));
+          for (let i = 0; i < STRING_N; i++) {
+            const d = Math.abs(i - centerIdx);
+            if (d < 8) {
+              const weight = Math.exp(-(d * d) / 10);
+              vel[i] += impulse * weight * 0.45;
+            }
+          }
+        }
+      }
+
       if (!dragging || event.pointerId !== pointerId) return;
-      const dx = event.clientX - startX;
-      if (!moved && Math.abs(dx) > 4) {
-        moved = true;
+      const dx = event.clientX - dragStartX;
+      if (!dragMoved && Math.abs(dx) > 4) {
+        dragMoved = true;
         viewport.classList.add("is-dragging");
         viewport.setPointerCapture(pointerId);
       }
-      if (moved) {
-        viewport.scrollLeft = startScrollLeft - dx;
+      if (dragMoved) {
+        dragVelocity = dragLastX - event.clientX;
+        dragLastX = event.clientX;
+        targetX = Math.max(
+          0,
+          Math.min(getMaxScroll(), dragStartTarget - dx),
+        );
       }
     },
     { signal },
@@ -161,14 +252,51 @@ onPage((signal, cleanup) => {
     if (!dragging || event.pointerId !== pointerId) return;
     dragging = false;
     viewport.classList.remove("is-dragging");
+    if (dragMoved) {
+      targetX = Math.max(
+        0,
+        Math.min(getMaxScroll(), targetX + dragVelocity * 10),
+      );
+    }
     if (viewport.hasPointerCapture(pointerId)) {
       viewport.releasePointerCapture(pointerId);
     }
   };
   viewport.addEventListener("pointerup", endDrag, { signal });
   viewport.addEventListener("pointercancel", endDrag, { signal });
+  viewport.addEventListener(
+    "pointerleave",
+    () => {
+      pointerActive = false;
+    },
+    { signal },
+  );
 
-  // Keyboard Left/Right navigation between stations
+  // Tactile click pluck near baseline
+  viewport.addEventListener(
+    "click",
+    (event) => {
+      if (!desktopQuery.matches || reducedMotionQuery.matches) return;
+      const target = event.target as HTMLElement | null;
+      if (target?.closest("a, button, input, select, label")) return;
+      const rect = viewport.getBoundingClientRect();
+      const clickX = event.clientX - rect.left;
+      const clickY = event.clientY - rect.top;
+      if (Math.abs(clickY - height * 0.5) < 90 && width > 0) {
+        const centerIdx =
+          Math.max(0, Math.min(1, clickX / width)) * (STRING_N - 1);
+        for (let i = 0; i < STRING_N; i++) {
+          const d = Math.abs(i - centerIdx);
+          if (d < 10) {
+            vel[i] -= 18 * Math.exp(-(d * d) / 12);
+          }
+        }
+      }
+    },
+    { signal },
+  );
+
+  // Keyboard Left/Right navigation
   window.addEventListener(
     "keydown",
     (event) => {
@@ -192,73 +320,378 @@ onPage((signal, cleanup) => {
     { signal },
   );
 
-  viewport.addEventListener("scroll", queueSync, { passive: true, signal });
-  window.addEventListener("resize", queueSync, { signal });
+  window.addEventListener(
+    "scroll",
+    () => {
+      if (desktopQuery.matches) return;
+      const y = window.scrollY;
+      mobileScrollSpeed = Math.min(28, Math.abs(y - lastWindowScrollY));
+      lastWindowScrollY = y;
+    },
+    { passive: true, signal },
+  );
 
-  // Traveling signal dot along the ECG path while music plays
-  let dotRaf = 0;
-  let dotStart = 0;
-  const cycleMs = 9500;
+  const resize = () => {
+    dpr = Math.min(2, window.devicePixelRatio || 1);
+    const rect = canvas.getBoundingClientRect();
+    width = Math.max(1, rect.width);
+    height = Math.max(1, rect.height);
+    canvas.width = Math.round(width * dpr);
+    canvas.height = Math.round(height * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-  const stopDot = () => {
-    if (dotRaf) {
-      cancelAnimationFrame(dotRaf);
-      dotRaf = 0;
+    if (!desktopQuery.matches) {
+      stage.style.transform = "";
+      currentX = 0;
+      targetX = 0;
+    } else {
+      const maxScroll = getMaxScroll();
+      targetX = Math.max(0, Math.min(maxScroll, targetX));
+      currentX = Math.max(0, Math.min(maxScroll, currentX));
+      stage.style.transform = `translate3d(${-currentX.toFixed(2)}px, 0, 0)`;
     }
+    syncRailUI();
+    if (reducedMotionQuery.matches) drawFrame(0, 0);
   };
 
-  const tickDot = (now: number) => {
-    if (
-      signal.aborted ||
-      !progressPath ||
-      pathLength <= 0 ||
-      document.documentElement.dataset.musicPlaying !== "true" ||
-      reducedMotionQuery.matches ||
-      document.hidden
-    ) {
-      dotRaf = 0;
+  // Sharp ECG kernel centered around normalized dx (in world px)
+  const ecgSample = (dx: number, dir: number, amp: number) => {
+    const adx = Math.abs(dx);
+    if (adx > 96) return 0;
+    // P-wave + Q dip + sharp R-peak + S overshoot + T-wave
+    const p = Math.exp(-((dx + 48) * (dx + 48)) / 90) * 5;
+    const q = -Math.exp(-((dx + 14) * (dx + 14)) / 24) * 7;
+    const r = Math.exp(-(dx * dx) / 36) * amp;
+    const s = -Math.exp(-((dx - 13) * (dx - 13)) / 26) * 11;
+    const t = Math.exp(-((dx - 48) * (dx - 48)) / 140) * 8;
+    return dir * (p + q + r + s + t);
+  };
+
+  function drawFrame(now: number, dtSec: number) {
+    if (signal.aborted || width <= 0 || height <= 0) return;
+
+    const styles = getComputedStyle(document.documentElement);
+    const lineColor =
+      styles.getPropertyValue("--pulse-line").trim() || "rgba(128,128,128,0.45)";
+    const activeColor =
+      styles.getPropertyValue("--text").trim() || "#ffffff";
+    const accentColor =
+      styles.getPropertyValue("--accent").trim() || "#ff4d00";
+    const bgColor = styles.getPropertyValue("--bg").trim() || "#070707";
+    const isDark = document.documentElement.dataset.theme === "dark";
+
+    const bridge = (
+      window as unknown as { __pulseAudio?: PulseAudioBridge }
+    ).__pulseAudio;
+    const audioPlaying = Boolean(bridge?.isPlaying());
+    const audioLevel = audioPlaying ? bridge?.getLevel() || 0 : 0;
+    const audioBins = audioPlaying ? bridge?.getBins() || null : null;
+
+    ctx.clearRect(0, 0, width, height);
+
+    if (!desktopQuery.matches) {
+      // Mobile: live vertical heartbeat trace along left spine (x = 20)
+      const spineX = 20;
+      const steps = Math.max(80, Math.floor(height / 4));
+      mobileScrollSpeed *= 0.9;
+      const energy = audioLevel * 14 + mobileScrollSpeed * 0.45;
+      beatClock += dtSec * (1.06 + energy * 0.04);
+
+      ctx.beginPath();
+      for (let i = 0; i <= steps; i++) {
+        const y = (i / steps) * height;
+        let xOff = 0;
+        if (!reducedMotionQuery.matches) {
+          const cycle = ((y / 170 - beatClock * 0.7) % 1 + 1) % 1;
+          if (cycle > 0.35 && cycle < 0.65) {
+            const local = (cycle - 0.5) * 260;
+            xOff += ecgSample(local, 1, 13 + energy * 0.6);
+          }
+          if (audioPlaying) {
+            xOff += Math.sin(y * 0.06 + now * 0.008) * (2.5 + audioLevel * 8);
+          }
+        }
+        const px = spineX + xOff;
+        if (i === 0) ctx.moveTo(px, y);
+        else ctx.lineTo(px, y);
+      }
+      ctx.strokeStyle = audioPlaying ? activeColor : lineColor;
+      ctx.lineWidth = 1.35;
+      ctx.stroke();
+
+      // Traveling signal dot on mobile spine
+      if (!reducedMotionQuery.matches) {
+        const dotY = ((beatClock * 110) % height + height) % height;
+        ctx.beginPath();
+        ctx.arc(spineX, dotY, 3, 0, Math.PI * 2);
+        ctx.fillStyle = accentColor;
+        ctx.fill();
+      }
       return;
     }
-    if (!dotStart) dotStart = now;
-    const progress = ((now - dotStart) % cycleMs) / cycleMs;
-    const pt = progressPath.getPointAtLength(progress * pathLength);
-    if (liveDot) {
-      liveDot.setAttribute("cx", pt.x.toFixed(1));
-      liveDot.setAttribute("cy", pt.y.toFixed(1));
+
+    // Desktop Horizontal Physics Wave
+    const midY = height * 0.5;
+    const maxScroll = getMaxScroll();
+
+    // Update spring inertia scroll
+    if (!reducedMotionQuery.matches) {
+      const prevX = currentX;
+      const diff = targetX - currentX;
+      currentX += diff * Math.min(1, dtSec * 11.5);
+      if (Math.abs(diff) < 0.08) currentX = targetX;
+      currentX = Math.max(0, Math.min(maxScroll, currentX));
+      scrollVelocity = (currentX - prevX) / Math.max(0.001, dtSec);
+      stage.style.transform = `translate3d(${-currentX.toFixed(2)}px, 0, 0)`;
+
+      stationEls.forEach((_el, idx) => {
+        const targetBoost = hoveredStation === idx ? 1 : 0;
+        stationBoost[idx] += (targetBoost - stationBoost[idx]) * Math.min(1, dtSec * 10);
+      });
+    } else {
+      currentX = targetX;
+      scrollVelocity = 0;
+      stage.style.transform = `translate3d(${-currentX.toFixed(2)}px, 0, 0)`;
     }
-    if (liveHalo) {
-      liveHalo.setAttribute("cx", pt.x.toFixed(1));
-      liveHalo.setAttribute("cy", pt.y.toFixed(1));
+
+    syncRailUI();
+
+    const speedNorm = Math.min(1, Math.abs(scrollVelocity) / 1400);
+    const liveBpm = Math.round(64 + speedNorm * 58 + audioLevel * 28);
+    if (bpmEl) {
+      const text = `${liveBpm} BPM`;
+      if (text !== lastBpmText) {
+        bpmEl.textContent = text;
+        lastBpmText = text;
+      }
     }
-    dotRaf = requestAnimationFrame(tickDot);
+
+    // Step 1D spring-damper string physics
+    if (!reducedMotionQuery.matches) {
+      const k = 0.06;
+      const damp = 0.095;
+      for (let i = 0; i < STRING_N; i++) {
+        const force = -k * disp[i] - damp * vel[i];
+        vel[i] += force;
+        disp[i] += vel[i];
+      }
+      // Propagate ripples cleanly to neighbors
+      for (let pass = 0; pass < 2; pass++) {
+        for (let i = 1; i < STRING_N - 1; i++) {
+          const avg = (disp[i - 1] + disp[i + 1]) * 0.5;
+          vel[i] += (avg - disp[i]) * 0.14;
+        }
+      }
+      beatClock += dtSec * (liveBpm / 60);
+      sweepPhase = (sweepPhase + dtSec * (0.22 + speedNorm * 0.25)) % 1;
+    }
+
+    const sampleY = (screenX: number) => {
+      const worldX = screenX + currentX;
+      let y = midY;
+
+      // 1. Station architectural ECG waveforms
+      const baseAmp = 21 + speedNorm * 10 + audioLevel * 8;
+      for (let i = 0; i < stationPositions.length; i++) {
+        const sx = stationPositions[i];
+        const boost = stationBoost[i] * 11;
+        y += ecgSample(worldX - sx, stationDirs[i], baseAmp + boost);
+      }
+
+      if (!reducedMotionQuery.matches) {
+        // 2. Living resting pulse ripple traveling along baseline
+        const pulseScreenX = sweepPhase * width;
+        const dPulse = screenX - pulseScreenX;
+        if (Math.abs(dPulse) < 60) {
+          y += Math.sin((dPulse / 60) * Math.PI) * Math.exp(-(dPulse * dPulse) / 480) * (7 + audioLevel * 10);
+        }
+
+        // 3. Real Web Audio frequency harmonics when playing
+        if (audioPlaying) {
+          const norm = screenX / Math.max(1, width);
+          let binEnergy = audioLevel;
+          if (audioBins && audioBins.length > 0) {
+            const binIdx = Math.min(
+              audioBins.length - 1,
+              Math.floor(norm * (audioBins.length * 0.55)),
+            );
+            binEnergy = Math.max(audioLevel * 0.5, audioBins[binIdx] / 255);
+          }
+          y +=
+            Math.sin(screenX * 0.028 - now * 0.0065) * (3 + binEnergy * 18) +
+            Math.cos(screenX * 0.055 + now * 0.004) * (1.5 + binEnergy * 9);
+        }
+
+        // 4. Cursor string pluck displacement
+        const idxFloat = (screenX / Math.max(1, width)) * (STRING_N - 1);
+        const i0 = Math.max(0, Math.min(STRING_N - 2, Math.floor(idxFloat)));
+        const frac = idxFloat - i0;
+        y += disp[i0] * (1 - frac) + disp[i0 + 1] * frac;
+      }
+
+      return y;
+    };
+
+    // Draw subtle center coordinate reference hairline
+    ctx.beginPath();
+    ctx.moveTo(0, midY);
+    ctx.lineTo(width, midY);
+    ctx.strokeStyle = isDark ? "rgba(255,255,255,0.05)" : "rgba(10,10,10,0.06)";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Draw main living heartbeat trace
+    const stepPx = 3;
+    ctx.beginPath();
+    for (let sx = 0; sx <= width; sx += stepPx) {
+      const sy = sampleY(sx);
+      if (sx === 0) ctx.moveTo(sx, sy);
+      else ctx.lineTo(sx, sy);
+    }
+    ctx.strokeStyle = audioPlaying || speedNorm > 0.05 ? activeColor : lineColor;
+    ctx.lineWidth = 1.45;
+    ctx.stroke();
+
+    // Highlight active segment near cursor or traveling head in Signal Orange
+    if (!reducedMotionQuery.matches) {
+      const headX = sweepPhase * width;
+      const headStart = Math.max(0, headX - 95);
+      ctx.beginPath();
+      for (let sx = headStart; sx <= headX; sx += stepPx) {
+        const sy = sampleY(sx);
+        if (sx === headStart) ctx.moveTo(sx, sy);
+        else ctx.lineTo(sx, sy);
+      }
+      ctx.strokeStyle = accentColor;
+      ctx.lineWidth = 1.75;
+      ctx.stroke();
+
+      // Glowing phosphor carrier dot
+      const headY = sampleY(headX);
+      ctx.save();
+      if (isDark) {
+        ctx.shadowColor = accentColor;
+        ctx.shadowBlur = 12;
+      }
+      ctx.beginPath();
+      ctx.arc(headX, headY, 3.2, 0, Math.PI * 2);
+      ctx.fillStyle = accentColor;
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // Draw dynamic stems + pinpoint anchor dots for each visible station directly to live peak/trough
+    const stemEdgeOffset = window.innerHeight <= 750 ? 38 : 52;
+    const stemColor = styles.getPropertyValue("--line-strong").trim() || lineColor;
+    stationPositions.forEach((worldSx, idx) => {
+      const screenSx = worldSx - currentX;
+      if (screenSx < -40 || screenSx > width + 40) return;
+      const anchorY = sampleY(screenSx);
+      const edgeY = midY + stationDirs[idx] * stemEdgeOffset;
+      const isActive = hoveredStation === idx || pinnedStation === idx;
+
+      ctx.beginPath();
+      ctx.moveTo(screenSx, edgeY);
+      ctx.lineTo(screenSx, anchorY);
+      ctx.strokeStyle = isActive ? accentColor : stemColor;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      if (isActive) {
+        ctx.beginPath();
+        ctx.arc(screenSx, anchorY, 8, 0, Math.PI * 2);
+        ctx.strokeStyle = accentColor;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+
+      ctx.beginPath();
+      ctx.arc(screenSx, anchorY, isActive ? 4 : 3, 0, Math.PI * 2);
+      ctx.fillStyle = bgColor;
+      ctx.fill();
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = isActive ? accentColor : activeColor;
+      ctx.stroke();
+    });
+
+    // Subtle cursor proximity crosshair when near baseline
+    if (pointerActive && !reducedMotionQuery.matches && Math.abs(pointerY - midY) < 70) {
+      const lineY = sampleY(pointerX);
+      ctx.beginPath();
+      ctx.arc(pointerX, lineY, 2.5, 0, Math.PI * 2);
+      ctx.fillStyle = accentColor;
+      ctx.fill();
+    }
+  }
+
+  const loop = (now: number) => {
+    if (signal.aborted) return;
+    if (reducedMotionQuery.matches || document.hidden) {
+      rafId = 0;
+      return;
+    }
+    const dtSec = lastTime ? Math.min(0.05, (now - lastTime) / 1000) : 0.016;
+    lastTime = now;
+    drawFrame(now, dtSec);
+    rafId = requestAnimationFrame(loop);
   };
 
-  const syncDotState = () => {
-    const playing =
-      document.documentElement.dataset.musicPlaying === "true" &&
-      !reducedMotionQuery.matches &&
-      !document.hidden;
-    if (playing && !dotRaf) {
-      dotStart = 0;
-      dotRaf = requestAnimationFrame(tickDot);
-    } else if (!playing) {
-      stopDot();
+  const startLoop = () => {
+    if (reducedMotionQuery.matches || document.hidden) {
+      drawFrame(0, 0);
+      return;
+    }
+    if (!rafId) {
+      lastTime = 0;
+      rafId = requestAnimationFrame(loop);
     }
   };
 
-  const observer = new MutationObserver(syncDotState);
-  observer.observe(document.documentElement, {
-    attributes: true,
-    attributeFilter: ["data-music-playing"],
+  const stopLoop = () => {
+    if (rafId) {
+      cancelAnimationFrame(rafId);
+      rafId = 0;
+    }
+  };
+
+  const ro = new ResizeObserver(resize);
+  ro.observe(viewport);
+
+  const themeObserver = new MutationObserver(() => {
+    if (reducedMotionQuery.matches) drawFrame(0, 0);
   });
-  document.addEventListener("visibilitychange", syncDotState, { signal });
-  reducedMotionQuery.addEventListener("change", syncDotState, { signal });
+  themeObserver.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["data-theme"],
+  });
+
+  document.addEventListener(
+    "visibilitychange",
+    () => {
+      if (document.hidden) stopLoop();
+      else startLoop();
+    },
+    { signal },
+  );
+  reducedMotionQuery.addEventListener(
+    "change",
+    () => {
+      if (reducedMotionQuery.matches) {
+        stopLoop();
+        drawFrame(0, 0);
+      } else {
+        startLoop();
+      }
+    },
+    { signal },
+  );
 
   cleanup(() => {
-    stopDot();
-    observer.disconnect();
+    stopLoop();
+    ro.disconnect();
+    themeObserver.disconnect();
   });
 
-  syncScrollUI();
-  syncDotState();
+  resize();
+  startLoop();
 });

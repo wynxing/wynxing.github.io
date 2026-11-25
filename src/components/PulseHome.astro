@@ -22,106 +22,78 @@ interface Props {
 
 const { projects, posts } = Astro.props;
 const stations = [
-  { id: '01', label: '身份', x: 265 },
-  { id: '02', label: '项目', x: 735 },
-  { id: '03', label: '文章', x: 1275 },
-  { id: '04', label: '此刻', x: 1750 },
-  { id: '05', label: '索引', x: 2165 },
+  { id: '01', label: 'WYNN', x: 300 },
+  { id: '02', label: 'WORKS', x: 900 },
+  { id: '03', label: 'WRITING', x: 1550 },
+  { id: '04', label: 'SIGNAL', x: 2140 },
+  { id: '05', label: 'OUTPOST', x: 2610 },
 ];
-const pulsePath =
-  'M 0 58 L 200 58 C 210 58 216 51 224 51 C 232 51 237 58 244 58 L 252 67 L 265 16 L 277 74 L 286 58 C 296 58 304 47 316 47 C 328 47 336 58 350 58 ' +
-  'L 670 58 C 680 58 686 65 694 65 C 702 65 707 58 714 58 L 722 49 L 735 100 L 747 42 L 756 58 C 766 58 774 69 786 69 C 798 69 806 58 820 58 ' +
-  'L 1210 58 C 1220 58 1226 51 1234 51 C 1242 51 1247 58 1254 58 L 1262 67 L 1275 16 L 1287 74 L 1296 58 C 1306 58 1314 47 1326 47 C 1338 47 1346 58 1360 58 ' +
-  'L 1685 58 C 1695 58 1701 65 1709 65 C 1717 65 1722 58 1729 58 L 1737 49 L 1750 100 L 1762 42 L 1771 58 C 1781 58 1789 69 1801 69 C 1813 69 1821 58 1835 58 ' +
-  'L 2100 58 C 2110 58 2116 51 2124 51 C 2132 51 2137 58 2144 58 L 2152 67 L 2165 16 L 2177 74 L 2186 58 C 2196 58 2204 47 2216 47 C 2228 47 2236 58 2250 58 L 2460 58';
-const anchors = [
-  { x: 265, y: 16 },
-  { x: 735, y: 100 },
-  { x: 1275, y: 16 },
-  { x: 1750, y: 100 },
-  { x: 2165, y: 16 },
-];
-const mobileSpinePath =
-  'M 10 0 L 10 42 L 18 50 L 3 60 L 21 70 L 10 80 L 10 180 L 18 188 L 3 198 L 21 208 L 10 218 L 10 330 L 18 338 L 3 348 L 21 358 L 10 368 L 10 480 L 18 488 L 3 498 L 21 508 L 10 518 L 10 640 L 18 648 L 3 658 L 21 668 L 10 678 L 10 760';
 ---
 
 <section class="pulse-home" aria-labelledby="pulse-title">
-  <div class="pulse-viewport" data-pulse-viewport tabindex="0" aria-label="Wynn 的个人脉搏时间线，支持横向滚动与拖拽">
-    <div class="pulse-stage">
-      <svg class="pulse-svg-layer" viewBox="0 0 2460 116" preserveAspectRatio="none" aria-hidden="true">
-        <path class="pulse-trace-base" d={pulsePath} />
-        <path class="pulse-trace-active" data-pulse-progress-path d={pulsePath} />
-        {anchors.map((point) => (
-          <g>
-            <circle class="pulse-anchor-ring" cx={point.x} cy={point.y} r="4.5" />
-            <circle class="pulse-anchor-dot" cx={point.x} cy={point.y} r="2" />
-          </g>
-        ))}
-        <circle class="pulse-live-halo" data-pulse-halo cx="0" cy="58" r="5" />
-        <circle class="pulse-live-dot" data-pulse-dot cx="0" cy="58" r="3" />
-      </svg>
+  <div class="pulse-viewport" data-pulse-viewport tabindex="0" aria-label="Wynn 的实时脉搏时间线，支持滚轮、拖拽与方向键横向探索">
+    <canvas class="pulse-canvas" data-pulse-canvas aria-hidden="true"></canvas>
 
-      <svg class="pulse-spine-mobile" viewBox="0 0 24 760" preserveAspectRatio="none" aria-hidden="true">
-        <path class="pulse-trace-base" d={mobileSpinePath} />
-      </svg>
-
+    <div class="pulse-stage" data-pulse-stage>
       <!-- 01 / IDENTITY (Above) -->
-      <article class="pulse-node is-above pulse-node--identity" style="left: 265px;" data-pulse-node="0">
-        <div class="node-head">
-          <span class="node-index"><em>01</em>IDENTITY</span>
-          <span class="identity-tag">SAVE POINT</span>
+      <section class="pulse-station is-above station-identity" style="left: 300px;" data-pulse-station="0" data-station-x="300">
+        <div class="station-head">
+          <span class="station-code"><em>01</em> IDENTITY</span>
+          <span class="station-sub">SAVE POINT</span>
         </div>
-        <div class="identity-row">
-          <a href="/about/" class="identity-avatar" aria-label="认识 Wynn">
-            <img src="/images/avatar.png" alt="Wynn 的像素黑猫头像" width="54" height="54" />
+        <div class="identity-hero">
+          <a href="/about/" class="identity-cat" aria-label="认识 Wynn">
+            <img src="/images/avatar.png" alt="Wynn 的像素黑猫头像" width="84" height="84" />
           </a>
-          <div class="identity-copy">
+          <div class="identity-title-wrap">
             <h1 id="pulse-title">Wynn</h1>
-            <p>写代码，造小工具，记下沿途。</p>
+            <p class="identity-lead">写代码，造小工具，记下沿途。</p>
           </div>
         </div>
-        <div class="identity-foot">
+        <div class="station-foot">
           <span class="muted">在这里，存个档。</span>
-          <a class="text-link" href="/about/">关于我 ↗</a>
+          <a class="bare-link" href="/about/">关于 / ABOUT ↗</a>
         </div>
-      </article>
+      </section>
 
-      <!-- 02 / PROJECTS (Below) -->
-      <article class="pulse-node is-below pulse-node--projects" style="left: 735px;" data-pulse-node="1">
-        <div class="node-head">
-          <span class="node-index"><em>02</em>PROJECTS</span>
-          <a class="node-all-link" href="/projects/">全部项目 ({String(projects.length).padStart(2, '0')}) ↗</a>
+      <!-- 02 / WORKS (Below) -->
+      <section class="pulse-station is-below station-projects" style="left: 900px;" data-pulse-station="1" data-station-x="900">
+        <div class="station-head">
+          <span class="station-code"><em>02</em> WORKS · {String(projects.length).padStart(2, '0')}</span>
+          <a class="bare-link" href="/projects/">全部项目 ↗</a>
         </div>
-        <div class="pulse-project-grid">
+        <ul class="bare-list bare-list--projects">
           {projects.map((project) => (
-            <a class="pulse-project-item" href={project.href}>
-              <div class="pulse-project-top">
-                <strong>{project.title}</strong>
-                <span class="pulse-project-status">{project.statusText}</span>
-              </div>
-              <span class="pulse-project-desc">{project.description}</span>
-            </a>
+            <li>
+              <a class="bare-row" href={project.href}>
+                <div class="bare-row-main">
+                  <strong>{project.title}</strong>
+                  <span class="bare-row-desc">{project.description}</span>
+                </div>
+                <span class="bare-row-meta">{project.statusText}</span>
+              </a>
+            </li>
           ))}
-        </div>
-      </article>
+        </ul>
+      </section>
 
       <!-- 03 / WRITING (Above) -->
-      <article class="pulse-node is-above pulse-node--writing" style="left: 1275px;" data-pulse-node="2">
-        <div class="node-head">
-          <span class="node-index"><em>03</em>WRITING</span>
-          <a class="node-all-link" href="/blog/">全部文章 ↗</a>
+      <section class="pulse-station is-above station-writing" style="left: 1550px;" data-pulse-station="2" data-station-x="1550">
+        <div class="station-head">
+          <span class="station-code"><em>03</em> WRITING</span>
+          <a class="bare-link" href="/blog/">全部文章 ↗</a>
         </div>
         {posts.length > 0 ? (
-          <ul class="pulse-post-list">
+          <ul class="bare-list">
             {posts.map((post, idx) => (
               <li>
                 <a
-                  class="pulse-post-link"
+                  class="bare-row"
                   href={post.href}
                   data-latest-entry={idx === 0 ? '' : undefined}
                 >
-                  <span class="pulse-post-title">{post.title}</span>
-                  <time datetime={post.datetime}>{post.date}</time>
+                  <strong class="bare-row-title">{post.title}</strong>
+                  <time class="bare-row-meta" datetime={post.datetime}>{post.date}</time>
                 </a>
               </li>
             ))}
@@ -129,39 +101,43 @@ const mobileSpinePath =
         ) : (
           <p class="muted" style="font-size: 13px; margin: 12px 0 0;">暂时还没有公开的文章。</p>
         )}
-      </article>
+      </section>
 
       <!-- 04 / SIGNAL (Below) -->
-      <article class="pulse-node is-below pulse-node--signal" style="left: 1750px;" data-pulse-node="3">
-        <div class="node-head">
-          <span class="node-index"><em>04</em>SIGNAL</span>
-          <a class="node-all-link" href="/search/">搜索 ↗</a>
+      <section class="pulse-station is-below station-signal" style="left: 2140px;" data-pulse-station="3" data-station-x="2140">
+        <div class="station-head">
+          <span class="station-code"><em>04</em> SIGNAL</span>
+          <a class="bare-link" href="/search/">检索全站 ↗</a>
         </div>
-        <div class="signal-tags" aria-label="关注方向">
-          <span class="signal-tag">AI Agent</span>
-          <span class="signal-tag">Rust 桌面工具</span>
-          <span class="signal-tag">工程复盘</span>
+        <dl class="signal-telemetry">
+          <div>
+            <dt>FOCUS</dt>
+            <dd>AI Agent · Rust 桌面工具 · 工程复盘</dd>
+          </div>
+          <div>
+            <dt>CLOCK</dt>
+            <dd><time data-desktop-clock aria-label="本地日期与时间"></time></dd>
+          </div>
+        </dl>
+        <div class="station-foot">
+          <span class="muted">全站文章与项目索引</span>
+          <a class="bare-link" href="/search/">SEARCH ARCHIVE ↗</a>
         </div>
-        <div class="signal-meta">
-          <time data-desktop-clock aria-label="本地日期与时间"></time>
-          <a class="text-link" href="/search/">检索文章与项目 →</a>
-        </div>
-      </article>
+      </section>
 
-      <!-- 05 / ARCHIVE (Above) -->
-      <article class="pulse-node is-above pulse-node--archive" style="left: 2165px;" data-pulse-node="4">
-        <div class="node-head">
-          <span class="node-index"><em>05</em>ARCHIVE</span>
-          <span class="identity-tag">COLOPHON</span>
+      <!-- 05 / OUTPOST (Above) -->
+      <section class="pulse-station is-above station-outpost" style="left: 2610px;" data-pulse-station="4" data-station-x="2610">
+        <div class="station-head">
+          <span class="station-code"><em>05</em> OUTPOST</span>
+          <span class="station-sub">© {new Date().getFullYear()} WYNN</span>
         </div>
-        <p class="archive-colophon">给走过的路留一个存档。代码与文字之外，也留一段安静的频率。</p>
-        <div class="archive-links">
+        <p class="outpost-statement">给走过的路，留一个存档。</p>
+        <div class="outpost-links">
           <a href={githubProfileUrl} target="_blank" rel="noreferrer">GitHub ↗</a>
           <a href="/rss.xml" data-astro-reload>RSS ↗</a>
           <a href="/admin/" data-astro-reload>写作后台</a>
-          <span class="archive-copy">© {new Date().getFullYear()} Wynn</span>
         </div>
-      </article>
+      </section>
     </div>
   </div>
 
@@ -183,7 +159,10 @@ const mobileSpinePath =
     <div class="pulse-rail-track" aria-hidden="true">
       <span class="pulse-rail-fill" data-pulse-bar></span>
     </div>
-    <span class="pulse-rail-hint" aria-hidden="true">滚轮 · 拖拽 · ← →</span>
+    <div class="pulse-rail-telemetry">
+      <span class="pulse-bpm" data-pulse-bpm>64 BPM</span>
+      <span class="pulse-rail-hint" aria-hidden="true">SCROLL · DRAG · ← →</span>
+    </div>
   </nav>
 </section>
 
