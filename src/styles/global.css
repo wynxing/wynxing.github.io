@@ -797,9 +797,8 @@ input[type="range"] {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding-bottom: 8px;
-  margin-bottom: 14px;
-  border-bottom: 1px solid var(--line);
+  padding-bottom: 0;
+  margin-bottom: 12px;
 }
 
 .station-code {
@@ -828,8 +827,7 @@ input[type="range"] {
   justify-content: space-between;
   gap: 16px;
   margin-top: 14px;
-  padding-top: 10px;
-  border-top: 1px solid var(--line);
+  padding-top: 0;
   font-size: 12px;
 }
 
@@ -966,10 +964,6 @@ input[type="range"] {
   padding: 0;
 }
 
-.bare-list li + li {
-  border-top: 1px solid var(--line);
-}
-
 .bare-row {
   display: flex;
   align-items: baseline;
@@ -1058,7 +1052,6 @@ input[type="range"] {
   justify-content: space-between;
   gap: 14px;
   padding: 7px 0;
-  border-bottom: 1px solid var(--line);
 }
 
 .signal-telemetry dt {
@@ -1094,8 +1087,7 @@ input[type="range"] {
   display: flex;
   flex-wrap: wrap;
   gap: 16px;
-  padding-top: 10px;
-  border-top: 1px solid var(--line);
+  padding-top: 0;
   font-family: var(--mono);
   font-size: 11px;
   color: var(--muted);
