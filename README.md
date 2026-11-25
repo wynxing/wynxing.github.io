@@ -1,8 +1,8 @@
 # Wynn's Save Point
 
-Wynn 的个人网站：一个可以认识 Wynn、看看他的作品、读文章，也可以停留片刻的夏日桌面。文章是其中一个板块，首页以个人身份和各板块入口组织体验。
+Wynn 的个人网站：一个可以认识 Wynn、看看他的作品、读文章，也可以顺着脉搏时间线停留片刻的个人主页。文章是其中一个板块，首页以个人身份、心率脉冲时间线与顶部悬浮音乐胶囊组织体验。
 
-当前视觉方向是夏日晴空绿野、蓝调夏夜、macOS 风格的液态磨砂玻璃和彩色立体 Dock 图标。保留站名、黑猫头像和真实内容。
+当前视觉方向为「纸墨脉搏」（温润纸白浅色 / 中性炭黑深色、细线边框、顶部悬浮音乐胶囊、水平滑动心率线与上下交替分布的节点；手机端自动转为纵向脉搏脊线）。保留站名、黑猫头像和真实内容。
 
 ## 当前定位与文档入口
 
@@ -41,12 +41,16 @@ pnpm deploy
 
 ## Appearance and reading
 
-The homepage is a summer desktop: day/night meadow wallpaper, frosted glass
-widgets, the original black-cat avatar, and a four-icon Dock. Public pages share
-new system typography and readable opaque glass surfaces. The default theme
-follows the OS; explicit choices persist under the existing `theme` key.
-Mobile layouts retain a compact Dock and show local date/time without location
-requests. Reduced-motion and reduced-transparency preferences are respected.
+The homepage is built around a quiet archival paper (light) and neutral obsidian
+charcoal (dark) system: a slim top utility bar, a centered floating music
+capsule, the original pixel black-cat avatar, and a horizontal ECG pulse line
+with five alternating Save Point nodes above and below the trace. Inner pages
+use distraction-free vertical reading layouts with hairline structure, serif
+headings, and monospace metadata. The default theme follows the OS; explicit
+choices persist under the existing `theme` key. Mobile layouts rotate the
+horizontal trace into a vertical heartbeat spine and keep a compact collapsible
+top music capsule. Reduced-motion and reduced-transparency preferences are
+respected.
 
 Astro ClientRouter preserves a single audio element across internal navigation.
 Page-scoped listeners, search instances and observers are released before swaps
@@ -84,8 +88,9 @@ Its third track fails once, then
 succeeds on retry; restarting the server resets this scenario. The synthesized
 audio is not part of the public website or production playlist.
 
-See `design/summer-reference.png` for the visual direction,
-`design/ASSETS.md` for image provenance and `design/QA.md` for browser validation.
+See [design/CURRENT.md](design/CURRENT.md) for the active visual direction,
+[design/ASSETS.md](design/ASSETS.md) for asset provenance, and
+[design/QA.md](design/QA.md) for historical browser validation records.
 
 ## Deployment
 

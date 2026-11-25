@@ -315,16 +315,19 @@ test("tag filtering preserves commas and combines category with tag", () => {
   assert.equal(tag.value, "absent");
 });
 
-test("summer desktop exposes four real routes, one latest article and one persistent player", () => {
+test("pulse homepage exposes four real routes, one latest article, five stations and one persistent player", () => {
   const html = read("dist/index.html");
-  const dock = html.match(/<nav class="desktop-dock[\s\S]*?<\/nav>/)[0];
+  const nav = html.match(/<nav class="desktop-nav"[\s\S]*?<\/nav>/)[0];
   assert.deepEqual(
-    [...dock.matchAll(/href="([^"]+)"/g)].map((m) => m[1]),
+    [...nav.matchAll(/href="([^"]+)"/g)].map((m) => m[1]),
     ["/blog/", "/projects/", "/about/", "/search/"],
   );
+  assert.ok(html.includes("data-pulse-viewport"));
+  assert.ok(html.includes("data-pulse-progress-path"));
+  assert.equal((html.match(/data-station-jump=/g) || []).length, 5);
   assert.equal((html.match(/data-latest-entry/g) || []).length, 1);
   assert.equal((html.match(/<audio /g) || []).length, 1);
-  assert.ok(html.includes('data-astro-transition-persist="summer-music"'));
+  assert.ok(html.includes('data-astro-transition-persist="save-point-music"'));
   const playlist = JSON.parse(
     html
       .match(/data-playlist="([^"]*)"/)[1]
@@ -344,13 +347,6 @@ test("summer desktop exposes four real routes, one latest article and one persis
     assert.ok(readFileSync(file).length < 6_000_000);
   }
   assert.equal((html.match(/data-entry-card/g) || []).length, 0);
-  for (const file of [
-    "day.webp",
-    "night.webp",
-    "day-mobile.webp",
-    "night-mobile.webp",
-  ])
-    assert.ok(existsSync(resolve(root, "dist/images/summer", file)));
 });
 
 test("removed notes leave no generated routes or links and inner navigation matches the Dock", () => {

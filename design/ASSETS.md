@@ -1,6 +1,8 @@
-# Summer Desktop assets
+# 设计素材来源记录
 
-素材来源记录。当前产品定位与设计要求见 [CURRENT.md](CURRENT.md)；以下生成提示词仅用于追溯素材制作，不作为独立的产品指令。
+> 状态说明：本文件下半部分记录的“夏日桌面”壁纸与 `summer-reference.png` 设计板属于已被替代的上一版视觉素材（保留文件与记录以作追溯）；当前线上视觉改版见 [CURRENT.md](CURRENT.md)。目前仍在使用的核心素材为黑猫头像 `public/images/avatar.png`、站点图标 `public/favicon-summer.png` / `public/favicon.ico`、Phosphor Icons Core 2.1.1（MIT）图标以及 `public/music/` 中的 CC0 曲目。
+
+素材来源记录。当前产品定位与设计要求见 [CURRENT.md](CURRENT.md)；以下生成提示词仅用于追溯历史素材制作，不作为独立的产品指令。
 
 Generated with the built-in ImageGen tool on 2026-09-09. No API-key CLI fallback.
 The supplied sketch was attached to the design-board request. Existing site

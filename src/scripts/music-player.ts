@@ -30,6 +30,9 @@ function render() {
     failed ? "重试播放" : audio.paused ? "播放" : "暂停",
   );
   play.dataset.playing = String(!audio.paused);
+  if (typeof document !== "undefined" && document.documentElement?.dataset) {
+    document.documentElement.dataset.musicPlaying = String(!audio.paused);
+  }
   get("pause").hidden = audio.paused;
   seek.disabled =
     !active ||
@@ -44,7 +47,7 @@ function render() {
   get("music-note").textContent = loading
     ? "正在加载…"
     : !active
-      ? "你的夏日歌单"
+      ? "此刻歌单"
       : audio.paused
         ? "按下播放，慢慢听。"
         : "正在播放";

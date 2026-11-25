@@ -3,10 +3,10 @@ import ThemeToggle from './ThemeToggle.astro';
 import { isCurrentPath } from '../utils/content';
 const links = [['/blog/', '文章'], ['/projects/', '项目'], ['/about/', '关于'], ['/search/', '搜索']];
 ---
-<header class="site-header container">
-  <div class="nav-shell glass">
-    <a class="brand" href="/" aria-label="Wynn’s Save Point 返回桌面"><img src="/images/avatar.png" alt="" width="25" height="25"/><span>Wynn’s Save Point</span></a>
+<header class="site-header">
+  <div class="nav-shell">
+    <a class="brand" href="/" aria-label="Wynn’s Save Point 返回首页"><img src="/images/avatar.png" alt="" width="22" height="22"/><span>Wynn’s Save Point</span></a>
     <nav class="desktop-nav" aria-label="主导航">{links.map(([href, label]) => <a href={href} aria-current={isCurrentPath(Astro.url.pathname, href) ? 'page' : undefined}>{label}</a>)}</nav>
-    <div class="nav-tools"><time data-desktop-clock aria-label="本地日期与时间"></time><ThemeToggle /></div>
+    <div class="nav-tools"><ThemeToggle /></div>
   </div>
 </header>

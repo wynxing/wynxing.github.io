@@ -1,12 +1,27 @@
 ---
 import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
-import SummerDesktop from '../components/SummerDesktop.astro';
-import { byDateDesc, entryHref, formatDate } from '../utils/content';
-const posts = byDateDesc(await getCollection('blog', ({ data }) => !data.draft));
-const newest = posts[0];
-const latest = newest ? { title: newest.data.title, href: entryHref(newest), date: formatDate(newest.data.date), datetime: newest.data.date.toISOString() } : undefined;
+import PulseHome from '../components/PulseHome.astro';
+import { byDateDesc, byProjectOrder, entryHref, formatDate, statusWithVersion } from '../utils/content';
+
+const posts = byDateDesc(await getCollection('blog', ({ data }) => !data.draft))
+  .slice(0, 3)
+  .map((post) => ({
+    title: post.data.title,
+    href: entryHref(post),
+    date: formatDate(post.data.date),
+    datetime: post.data.date.toISOString(),
+  }));
+
+const projects = byProjectOrder(await getCollection('projects', ({ data }) => !data.draft))
+  .slice(0, 4)
+  .map((project) => ({
+    title: project.data.title,
+    href: entryHref(project),
+    description: project.data.description,
+    statusText: statusWithVersion(project.data.status, project.data.version),
+  }));
 ---
 <BaseLayout>
-  <SummerDesktop latest={latest}/>
+  <PulseHome projects={projects} posts={posts} />
 </BaseLayout>

@@ -2,6 +2,7 @@
 import { getCollection, type CollectionEntry } from 'astro:content';
 import BaseLayout from './BaseLayout.astro';
 import GiscusComments from '../components/GiscusComments.astro';
+import PulseMark from '../components/PulseMark.astro';
 import TableOfContents from '../components/TableOfContents.astro';
 import { formatDate, readingTime, tagHref, byDateDesc, byProjectOrder, entryHref, categoryLabel, statusWithVersion } from '../utils/content';
 
@@ -79,6 +80,7 @@ const next = isProject ? siblings[position + 1] : siblings[position - 1];
       </div>
     </div>
     <div class="article-end">
+      <PulseMark />
       <p class="end-mark"><span aria-hidden="true">✳</span> {isProject ? '这个项目，存好了。' : '这一篇，存好了。'}</p>
       {(previous || next) && <nav class="adjacent-posts" aria-label={isProject ? '相邻项目' : '相邻文章'}>
         {previous && <a class="glass" href={entryHref(previous)}><span class="eyebrow">{isProject ? '← 上一个项目' : '← 上一篇'}</span><span>{previous.data.title}</span></a>}

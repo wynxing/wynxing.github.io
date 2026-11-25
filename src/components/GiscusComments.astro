@@ -21,7 +21,7 @@ import { giscusConfig } from '../consts';
   const mount = document.querySelector<HTMLElement>('[data-giscus-mount]');
   if (host && mount) {
     const themeFor = () =>
-      document.documentElement.dataset.theme === 'dark' ? 'noborder_gray' : 'light';
+      document.documentElement.dataset.theme === 'dark' ? 'noborder_dark' : 'light';
 
     const load = () => {
       if (mount.querySelector('script') || mount.querySelector('iframe')) return;
