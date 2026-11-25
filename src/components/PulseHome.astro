@@ -6,6 +6,9 @@ export interface HomeProject {
   href: string;
   description: string;
   statusText: string;
+  role: string;
+  highlight: string;
+  stack: string;
 }
 
 export interface HomePost {
@@ -13,20 +16,27 @@ export interface HomePost {
   href: string;
   date: string;
   datetime: string;
+  description: string;
+  category: string;
+  readingTime: string;
 }
 
 interface Props {
   projects: HomeProject[];
   posts: HomePost[];
+  projectCount: number;
+  postCount: number;
 }
 
-const { projects, posts } = Astro.props;
+const { projects, posts, projectCount, postCount } = Astro.props;
+const leadProject = projects[0];
+const leadPost = posts[0];
 const stations = [
-  { id: '01', label: 'WYNN', x: 300 },
-  { id: '02', label: 'WORKS', x: 900 },
-  { id: '03', label: 'WRITING', x: 1550 },
-  { id: '04', label: 'SIGNAL', x: 2140 },
-  { id: '05', label: 'OUTPOST', x: 2610 },
+  { id: '01', label: 'WYNN', x: 280 },
+  { id: '02', label: 'WORKS', x: 820 },
+  { id: '03', label: 'WRITING', x: 1380 },
+  { id: '04', label: 'SIGNAL', x: 1870 },
+  { id: '05', label: 'OUTPOST', x: 2280 },
 ];
 ---
 
@@ -35,8 +45,8 @@ const stations = [
     <canvas class="pulse-canvas" data-pulse-canvas aria-hidden="true"></canvas>
 
     <div class="pulse-stage" data-pulse-stage>
-      <!-- 01 / IDENTITY (Above) -->
-      <section class="pulse-station is-above station-identity" style="left: 300px;" data-pulse-station="0" data-station-x="300">
+      <!-- 01 / IDENTITY (Above) & TELEMETRY MIRROR (Below) -->
+      <section class="pulse-station is-above station-identity" style="left: 280px;" data-pulse-station="0" data-station-x="280">
         <div class="station-head">
           <span class="station-code"><em>01</em> IDENTITY</span>
           <span class="station-sub">SAVE POINT</span>
@@ -56,16 +66,54 @@ const stations = [
         </div>
       </section>
 
-      <!-- 02 / WORKS (Below) -->
-      <section class="pulse-station is-below station-projects" style="left: 900px;" data-pulse-station="1" data-station-x="900">
+      <aside class="pulse-mirror is-below station-mirror--telemetry" style="left: 280px;" data-pulse-mirror="0" aria-label="站点实时概览">
+        <dl class="signal-telemetry">
+          <div>
+            <dt>ARCHIVE</dt>
+            <dd>{String(projectCount).padStart(2, '0')} PROJECTS · {String(postCount).padStart(2, '0')} ESSAYS</dd>
+          </div>
+          <div>
+            <dt>FOCUS</dt>
+            <dd>AI Agent · Rust · Engineering</dd>
+          </div>
+          <div>
+            <dt>CLOCK</dt>
+            <dd><time data-desktop-clock aria-label="本地日期与时间"></time></dd>
+          </div>
+        </dl>
+      </aside>
+
+      <!-- 02 / WORKS (Below) & LIVE PROJECT INSPECT MIRROR (Above) -->
+      {leadProject && (
+        <aside class="pulse-mirror is-above station-mirror--hover station-mirror--project" style="left: 820px;" data-pulse-mirror="1" data-project-mirror aria-label="项目焦点预览">
+          <div class="station-head">
+            <span class="station-code"><em>INSPECT</em> <span data-pm-index>01/{String(projects.length).padStart(2, '0')}</span></span>
+            <span class="station-sub" data-pm-stack>{leadProject.stack}</span>
+          </div>
+          <h2 class="mirror-title" data-pm-title>{leadProject.title}</h2>
+          {leadProject.role && <p class="mirror-role" data-pm-role>{leadProject.role}</p>}
+          <blockquote class="mirror-highlight" data-pm-highlight>{leadProject.highlight}</blockquote>
+        </aside>
+      )}
+
+      <section class="pulse-station is-below station-projects" style="left: 820px;" data-pulse-station="1" data-station-x="820">
         <div class="station-head">
-          <span class="station-code"><em>02</em> WORKS · {String(projects.length).padStart(2, '0')}</span>
+          <span class="station-code"><em>02</em> WORKS · {String(projectCount).padStart(2, '0')}</span>
           <a class="bare-link" href="/projects/">全部项目 ↗</a>
         </div>
         <ul class="bare-list bare-list--projects">
-          {projects.map((project) => (
+          {projects.map((project, idx) => (
             <li>
-              <a class="bare-row" href={project.href}>
+              <a
+                class:list={['bare-row', { 'is-active': idx === 0 }]}
+                href={project.href}
+                data-project-item
+                data-idx={`${String(idx + 1).padStart(2, '0')}/${String(projects.length).padStart(2, '0')}`}
+                data-title={project.title}
+                data-role={project.role}
+                data-highlight={project.highlight}
+                data-stack={project.stack}
+              >
                 <div class="bare-row-main">
                   <strong>{project.title}</strong>
                   <span class="bare-row-desc">{project.description}</span>
@@ -77,10 +125,10 @@ const stations = [
         </ul>
       </section>
 
-      <!-- 03 / WRITING (Above) -->
-      <section class="pulse-station is-above station-writing" style="left: 1550px;" data-pulse-station="2" data-station-x="1550">
+      <!-- 03 / WRITING (Above) & LIVE ARTICLE EXCERPT MIRROR (Below) -->
+      <section class="pulse-station is-above station-writing" style="left: 1380px;" data-pulse-station="2" data-station-x="1380">
         <div class="station-head">
-          <span class="station-code"><em>03</em> WRITING</span>
+          <span class="station-code"><em>03</em> WRITING · {String(postCount).padStart(2, '0')}</span>
           <a class="bare-link" href="/blog/">全部文章 ↗</a>
         </div>
         {posts.length > 0 ? (
@@ -88,9 +136,13 @@ const stations = [
             {posts.map((post, idx) => (
               <li>
                 <a
-                  class="bare-row"
+                  class:list={['bare-row', { 'is-active': idx === 0 }]}
                   href={post.href}
                   data-latest-entry={idx === 0 ? '' : undefined}
+                  data-post-item
+                  data-title={post.title}
+                  data-desc={post.description}
+                  data-meta={`${post.category} · ${post.readingTime} · ${post.date}`}
                 >
                   <strong class="bare-row-title">{post.title}</strong>
                   <time class="bare-row-meta" datetime={post.datetime}>{post.date}</time>
@@ -103,30 +155,55 @@ const stations = [
         )}
       </section>
 
-      <!-- 04 / SIGNAL (Below) -->
-      <section class="pulse-station is-below station-signal" style="left: 2140px;" data-pulse-station="3" data-station-x="2140">
+      {leadPost && (
+        <aside class="pulse-mirror is-below station-mirror--hover station-mirror--writing" style="left: 1380px;" data-pulse-mirror="2" data-post-mirror aria-label="文章导语预览">
+          <div class="station-head">
+            <span class="station-code"><em>EXCERPT</em></span>
+            <span class="station-sub" data-wm-meta>{leadPost.category} · {leadPost.readingTime} · {leadPost.date}</span>
+          </div>
+          <h2 class="mirror-title mirror-title--sm" data-wm-title>{leadPost.title}</h2>
+          <p class="mirror-desc" data-wm-desc>{leadPost.description}</p>
+        </aside>
+      )}
+
+      <!-- 04 / SIGNAL (Below) & INSTRUMENT GUIDE MIRROR (Above) -->
+      <aside class="pulse-mirror is-above station-mirror--hover station-mirror--guide" style="left: 1870px;" data-pulse-mirror="3" aria-label="交互指引">
+        <div class="station-head">
+          <span class="station-code"><em>CH-01</em> INSTRUMENT</span>
+          <span class="station-sub">60FPS CANVAS</span>
+        </div>
+        <p class="mirror-desc">光标扫过中轴即可物理拨动信号弦；滚轮与拖拽速率实时牵引心率波形与 BPM 读数。</p>
+      </aside>
+
+      <section class="pulse-station is-below station-signal" style="left: 1870px;" data-pulse-station="3" data-station-x="1870">
         <div class="station-head">
           <span class="station-code"><em>04</em> SIGNAL</span>
           <a class="bare-link" href="/search/">检索全站 ↗</a>
         </div>
-        <dl class="signal-telemetry">
-          <div>
-            <dt>FOCUS</dt>
-            <dd>AI Agent · Rust 桌面工具 · 工程复盘</dd>
-          </div>
-          <div>
-            <dt>CLOCK</dt>
-            <dd><time data-desktop-clock aria-label="本地日期与时间"></time></dd>
-          </div>
-        </dl>
-        <div class="station-foot">
-          <span class="muted">全站文章与项目索引</span>
-          <a class="bare-link" href="/search/">SEARCH ARCHIVE ↗</a>
-        </div>
+        <ul class="bare-list">
+          <li>
+            <a class="bare-row" href="/search/">
+              <strong class="bare-row-title">全站索引搜索</strong>
+              <span class="bare-row-meta">PAGEFIND ↗</span>
+            </a>
+          </li>
+          <li>
+            <a class="bare-row" href="/projects/">
+              <strong class="bare-row-title">工程与产品交付</strong>
+              <span class="bare-row-meta">{String(projectCount).padStart(2, '0')} ITEMS ↗</span>
+            </a>
+          </li>
+          <li>
+            <a class="bare-row" href="/blog/">
+              <strong class="bare-row-title">文章与复盘档案</strong>
+              <span class="bare-row-meta">{String(postCount).padStart(2, '0')} POSTS ↗</span>
+            </a>
+          </li>
+        </ul>
       </section>
 
-      <!-- 05 / OUTPOST (Above) -->
-      <section class="pulse-station is-above station-outpost" style="left: 2610px;" data-pulse-station="4" data-station-x="2610">
+      <!-- 05 / OUTPOST (Above) & END OF TRACE MIRROR (Below) -->
+      <section class="pulse-station is-above station-outpost" style="left: 2280px;" data-pulse-station="4" data-station-x="2280">
         <div class="station-head">
           <span class="station-code"><em>05</em> OUTPOST</span>
           <span class="station-sub">© {new Date().getFullYear()} WYNN</span>
@@ -138,6 +215,14 @@ const stations = [
           <a href="/admin/" data-astro-reload>写作后台</a>
         </div>
       </section>
+
+      <aside class="pulse-mirror is-below station-mirror--hover station-mirror--end" style="left: 2280px;" data-pulse-mirror="4" aria-label="坐标终点">
+        <div class="station-head">
+          <span class="station-code"><em>END</em> TERMINUS</span>
+          <span class="station-sub">X:2280</span>
+        </div>
+        <p class="mirror-desc">SAVE POINT ESTABLISHED · 保持清醒与热爱。</p>
+      </aside>
     </div>
   </div>
 

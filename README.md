@@ -42,16 +42,18 @@ pnpm deploy
 ## Appearance and reading
 
 The homepage is a borderless high-contrast gallery (`#f5f5f3` light / `#070707`
-dark with `#e63e00` / `#ff4d00` signal orange accents): a slim top utility bar,
-a centered Braun-inspired floating audio deck wired into Web Audio `AnalyserNode`,
-the original pixel black-cat avatar, and a live 60fps HTML5 Canvas heartbeat
-instrument with five borderless stations anchored above and below the trace.
-Desktop scrolling uses damped spring inertia and modulates live BPM, cursor
-proximity plucks the string physics, and station hover creates localized wave
-resonance. Inner pages render directly on the full-bleed canvas with serif
-headings and monospace metadata. The default theme follows the OS; explicit
-choices persist under `theme`. Mobile layouts draw a live vertical pulse spine
-along the left margin and keep a compact collapsible top audio deck.
+dark with `#e63e00` / `#ff4d00` signal orange accents and subtle matte grain):
+a slim top utility bar, a centered Braun-inspired floating audio deck wired into
+Web Audio `AnalyserNode`, the original pixel black-cat avatar, and a live 60fps
+HTML5 Canvas heartbeat instrument with slow-parallax coordinate markings, dual
+ghost echo traces, vertical modulation hairlines, and five borderless stations
+paired with cross-line live mirror previews. Desktop scrolling uses damped
+spring inertia and modulates live BPM, cursor proximity plucks the string
+physics, and hovering works/essays updates the opposite inspect panels while
+exciting localized wave resonance. Inner pages render directly on the full-bleed
+canvas with serif headings and monospace metadata. The default theme follows the
+OS; explicit choices persist under `theme`. Mobile layouts draw a live vertical
+pulse spine along the left margin and keep a compact collapsible top audio deck.
 Reduced-motion and reduced-transparency preferences are respected.
 
 Astro ClientRouter preserves a single audio element across internal navigation.

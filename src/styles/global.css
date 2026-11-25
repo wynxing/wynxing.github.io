@@ -63,6 +63,16 @@ body {
   min-height: 100dvh;
 }
 
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  pointer-events: none;
+  opacity: 0.032;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+}
+
 h1,
 h2,
 h3,
@@ -752,29 +762,33 @@ input[type="range"] {
 
 .pulse-stage {
   position: relative;
-  width: 2860px;
+  width: 2520px;
   height: 100%;
   min-height: 460px;
   will-change: transform;
   z-index: 2;
 }
 
-/* Borderless stations anchored cleanly above and below the living signal */
-.pulse-station {
+/* Borderless stations & cross-line mirrors anchored above and below the living signal */
+.pulse-station,
+.pulse-mirror {
   position: absolute;
   transform: translateX(-50%);
   transition: opacity 0.28s ease;
 }
 
-.pulse-stage.has-hover .pulse-station:not(.is-focused) {
+.pulse-stage.has-hover .pulse-station:not(.is-focused),
+.pulse-stage.has-hover .pulse-mirror:not(.is-focused) {
   opacity: 0.34;
 }
 
-.pulse-station.is-above {
+.pulse-station.is-above,
+.pulse-mirror.is-above {
   bottom: calc(50% + 52px);
 }
 
-.pulse-station.is-below {
+.pulse-station.is-below,
+.pulse-mirror.is-below {
   top: calc(50% + 52px);
 }
 
@@ -819,10 +833,15 @@ input[type="range"] {
   font-size: 12px;
 }
 
-/* Station 01: Sculptural Identity */
+/* Station 01: Sculptural Identity & Below Telemetry Mirror */
 .station-identity {
-  width: 420px;
-  padding-bottom: 16px;
+  width: 390px;
+  padding-bottom: 14px;
+}
+
+.station-mirror--telemetry {
+  width: 380px;
+  padding-top: 12px;
 }
 
 .identity-hero {
@@ -833,8 +852,8 @@ input[type="range"] {
 
 .identity-cat {
   display: block;
-  width: 82px;
-  height: 82px;
+  width: 80px;
+  height: 80px;
   flex: none;
   padding: 5px;
   background: #ffffff;
@@ -857,7 +876,7 @@ input[type="range"] {
 
 .identity-title-wrap h1 {
   font-family: var(--serif);
-  font-size: clamp(50px, 4.8vw, 68px);
+  font-size: clamp(48px, 4.6vw, 66px);
   font-weight: 600;
   letter-spacing: -0.04em;
   line-height: 0.95;
@@ -870,9 +889,79 @@ input[type="range"] {
   margin: 0;
 }
 
+/* Cross-line mirror typography */
+.station-mirror--project {
+  width: 460px;
+  padding-bottom: 14px;
+}
+
+.station-mirror--writing {
+  width: 430px;
+  padding-top: 14px;
+}
+
+.station-mirror--guide {
+  width: 340px;
+  padding-bottom: 14px;
+}
+
+.station-mirror--end {
+  width: 300px;
+  padding-top: 14px;
+}
+
+.mirror-title {
+  font-family: var(--serif);
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  margin: 0 0 6px;
+}
+
+.mirror-title--sm {
+  font-size: 17px;
+  line-height: 1.4;
+  margin-bottom: 8px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.mirror-role {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+  margin: 0 0 10px;
+}
+
+.mirror-highlight {
+  margin: 0;
+  padding: 6px 0 6px 14px;
+  border-left: 2px solid var(--accent);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.mirror-desc {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: var(--muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 /* Station 02: Borderless Works List */
 .station-projects {
-  width: 490px;
+  width: 460px;
   padding-top: 14px;
 }
 
@@ -944,15 +1033,23 @@ input[type="range"] {
   color: var(--accent);
 }
 
+@media (min-width: 900px) {
+  .bare-row.is-active .bare-row-meta,
+  .bare-row.is-active strong,
+  .bare-row.is-active .bare-row-title {
+    color: var(--accent);
+  }
+}
+
 /* Station 03: Writing */
 .station-writing {
-  width: 460px;
+  width: 440px;
   padding-bottom: 14px;
 }
 
 /* Station 04: Signal Telemetry */
 .station-signal {
-  width: 390px;
+  width: 340px;
   padding-top: 14px;
 }
 
@@ -986,7 +1083,7 @@ input[type="range"] {
 
 /* Station 05: Outpost */
 .station-outpost {
-  width: 340px;
+  width: 300px;
   padding-bottom: 14px;
 }
 
@@ -1946,10 +2043,12 @@ html .search-panel .pagefind-ui .pagefind-ui__result-excerpt mark {
   .music-stage {
     padding: 8px 16px 2px;
   }
-  .pulse-station.is-above {
+  .pulse-station.is-above,
+  .pulse-mirror.is-above {
     bottom: calc(50% + 38px);
   }
-  .pulse-station.is-below {
+  .pulse-station.is-below,
+  .pulse-mirror.is-below {
     top: calc(50% + 38px);
   }
 }
@@ -2057,7 +2156,25 @@ html .search-panel .pagefind-ui .pagefind-ui__result-excerpt mark {
     padding: 0;
   }
 
-  .pulse-stage.has-hover .pulse-station:not(.is-focused) {
+  .station-mirror--hover {
+    display: none;
+  }
+
+  .pulse-mirror.station-mirror--telemetry {
+    position: relative;
+    left: auto !important;
+    top: auto;
+    bottom: auto;
+    transform: none;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    padding: 6px 0 0;
+    margin-top: -14px;
+  }
+
+  .pulse-stage.has-hover .pulse-station:not(.is-focused),
+  .pulse-stage.has-hover .pulse-mirror:not(.is-focused) {
     opacity: 1;
   }
 
@@ -2214,6 +2331,7 @@ html .search-panel .pagefind-ui .pagefind-ui__result-excerpt mark {
 }
 
 @media print {
+  body::before,
   .site-header,
   .music-stage,
   #music-home,

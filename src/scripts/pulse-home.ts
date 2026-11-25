@@ -25,13 +25,16 @@ onPage((signal, cleanup) => {
   const stationEls = [
     ...document.querySelectorAll<HTMLElement>("[data-pulse-station]"),
   ];
+  const mirrorEls = [
+    ...document.querySelectorAll<HTMLElement>("[data-pulse-mirror]"),
+  ];
   const stationBtns = [
     ...document.querySelectorAll<HTMLButtonElement>("[data-station-jump]"),
   ];
 
   const desktopQuery = matchMedia("(min-width: 900px)");
   const reducedMotionQuery = matchMedia("(prefers-reduced-motion: reduce)");
-  const stageWidth = 2860;
+  const stageWidth = 2520;
   const stationPositions = stationEls.map((el) =>
     Number(el.dataset.stationX || 0),
   );
@@ -52,7 +55,7 @@ onPage((signal, cleanup) => {
   const disp = new Float32Array(STRING_N);
   const vel = new Float32Array(STRING_N);
 
-  // Pointer telemetry on canvas
+  // Pointer telemetry
   let pointerActive = false;
   let pointerX = 0;
   let pointerY = 0;
@@ -69,6 +72,18 @@ onPage((signal, cleanup) => {
   let lastWindowScrollY = typeof window !== "undefined" ? window.scrollY : 0;
 
   const getMaxScroll = () => Math.max(0, stageWidth - viewport.clientWidth);
+
+  const injectImpulseAtScreenX = (screenX: number, strength: number) => {
+    if (!desktopQuery.matches || reducedMotionQuery.matches || width <= 0) return;
+    const normX = Math.max(0, Math.min(1, screenX / width));
+    const centerIdx = normX * (STRING_N - 1);
+    for (let i = 0; i < STRING_N; i++) {
+      const d = Math.abs(i - centerIdx);
+      if (d < 9) {
+        vel[i] += strength * Math.exp(-(d * d) / 11);
+      }
+    }
+  };
 
   const setActiveStation = (activeIndex: number) => {
     stationBtns.forEach((btn, idx) => {
@@ -117,6 +132,7 @@ onPage((signal, cleanup) => {
       currentX = targetX;
       stage.style.transform = `translate3d(${-currentX.toFixed(2)}px, 0, 0)`;
       syncRailUI();
+      drawFrame(0, 0);
     }
   };
 
@@ -124,37 +140,125 @@ onPage((signal, cleanup) => {
     btn.addEventListener("click", () => scrollToStation(idx), { signal });
   });
 
-  // Hover resonance & gallery focus dimming
+  // Unified focus spotlight for both primary station and opposite mirror
+  const setFocusedIndex = (idx: number | null) => {
+    hoveredStation = idx;
+    stationEls.forEach((el, i) => el.classList.toggle("is-focused", i === idx));
+    mirrorEls.forEach((el) => {
+      const mIdx = Number(el.dataset.pulseMirror);
+      el.classList.toggle("is-focused", mIdx === idx);
+    });
+    stage.classList.toggle("has-hover", idx !== null);
+  };
+
   stationEls.forEach((el, idx) => {
-    const enter = () => {
-      hoveredStation = idx;
-      stage.classList.add("has-hover");
-      el.classList.add("is-focused");
-    };
-    const leave = () => {
-      if (hoveredStation === idx) hoveredStation = null;
-      el.classList.remove("is-focused");
-      if (hoveredStation === null) stage.classList.remove("has-hover");
-    };
-    el.addEventListener("pointerenter", enter, { signal });
-    el.addEventListener("pointerleave", leave, { signal });
+    el.addEventListener("pointerenter", () => setFocusedIndex(idx), { signal });
+    el.addEventListener(
+      "pointerleave",
+      () => {
+        if (hoveredStation === idx) setFocusedIndex(null);
+      },
+      { signal },
+    );
     el.addEventListener(
       "focusin",
       () => {
-        enter();
+        setFocusedIndex(idx);
         if (desktopQuery.matches) {
           const sx = stationPositions[idx] ?? 0;
           const viewLeft = currentX + 120;
           const viewRight = currentX + viewport.clientWidth - 120;
-          if (sx < viewLeft || sx > viewRight) {
-            scrollToStation(idx);
-          }
+          if (sx < viewLeft || sx > viewRight) scrollToStation(idx);
         }
       },
       { signal },
     );
-    el.addEventListener("focusout", leave, { signal });
+    el.addEventListener(
+      "focusout",
+      (event) => {
+        const next = event.relatedTarget as Node | null;
+        if (next && el.contains(next)) return;
+        if (hoveredStation === idx) setFocusedIndex(null);
+      },
+      { signal },
+    );
   });
+
+  mirrorEls.forEach((el) => {
+    const idx = Number(el.dataset.pulseMirror);
+    el.addEventListener("pointerenter", () => setFocusedIndex(idx), { signal });
+    el.addEventListener(
+      "pointerleave",
+      () => {
+        if (hoveredStation === idx) setFocusedIndex(null);
+      },
+      { signal },
+    );
+  });
+
+  // Cross-line mirror sync: 02 WORKS -> Above Project Inspect Mirror
+  const projectMirror = document.querySelector<HTMLElement>("[data-project-mirror]");
+  const projectRows = [
+    ...document.querySelectorAll<HTMLElement>("[data-project-item]"),
+  ];
+  if (projectMirror && projectRows.length > 0) {
+    const pmIndex = projectMirror.querySelector("[data-pm-index]");
+    const pmStack = projectMirror.querySelector("[data-pm-stack]");
+    const pmTitle = projectMirror.querySelector("[data-pm-title]");
+    const pmRole = projectMirror.querySelector("[data-pm-role]");
+    const pmHighlight = projectMirror.querySelector("[data-pm-highlight]");
+
+    const activateProject = (row: HTMLElement, ripple: boolean) => {
+      projectRows.forEach((item) => item.classList.toggle("is-active", item === row));
+      if (pmIndex) pmIndex.textContent = row.dataset.idx || "";
+      if (pmStack) pmStack.textContent = row.dataset.stack || "";
+      if (pmTitle) pmTitle.textContent = row.dataset.title || "";
+      if (pmRole) pmRole.textContent = row.dataset.role || "";
+      if (pmHighlight) pmHighlight.textContent = row.dataset.highlight || "";
+      if (ripple) {
+        injectImpulseAtScreenX((stationPositions[1] ?? 820) - currentX, -11);
+      }
+    };
+
+    projectRows.forEach((row) => {
+      row.addEventListener("pointerenter", () => activateProject(row, true), {
+        signal,
+      });
+      row.addEventListener("focusin", () => activateProject(row, false), {
+        signal,
+      });
+    });
+  }
+
+  // Cross-line mirror sync: 03 WRITING -> Below Excerpt Mirror
+  const postMirror = document.querySelector<HTMLElement>("[data-post-mirror]");
+  const postRows = [
+    ...document.querySelectorAll<HTMLElement>("[data-post-item]"),
+  ];
+  if (postMirror && postRows.length > 0) {
+    const wmMeta = postMirror.querySelector("[data-wm-meta]");
+    const wmTitle = postMirror.querySelector("[data-wm-title]");
+    const wmDesc = postMirror.querySelector("[data-wm-desc]");
+
+    const activatePost = (row: HTMLElement, ripple: boolean) => {
+      postRows.forEach((item) => item.classList.toggle("is-active", item === row));
+      if (wmMeta) wmMeta.textContent = row.dataset.meta || "";
+      if (wmTitle) wmTitle.textContent = row.dataset.title || "";
+      if (wmDesc) wmDesc.textContent = row.dataset.desc || "";
+      if (ripple) {
+        injectImpulseAtScreenX((stationPositions[2] ?? 1380) - currentX, 11);
+      }
+    };
+
+    postRows.forEach((row) => {
+      row.addEventListener("pointerenter", () => activatePost(row, true), {
+        signal,
+      });
+      row.addEventListener("focusin", () => activatePost(row, false), {
+        signal,
+      });
+    });
+  }
 
   // Wheel -> inertial horizontal target
   viewport.addEventListener(
@@ -210,22 +314,14 @@ onPage((signal, cleanup) => {
       pointerX = event.clientX - rect.left;
       pointerY = event.clientY - rect.top;
 
-      // Pluck the string physically if cursor moves near the midline
+      // Pluck the string physically if cursor moves near midline
       if (desktopQuery.matches && !reducedMotionQuery.matches && width > 0) {
         const midY = height * 0.5;
         const distY = Math.abs(pointerY - midY);
         const dy = pointerY - prevPointerY;
-        if (distY < 54 && Math.abs(dy) > 0.6) {
-          const normX = Math.max(0, Math.min(1, pointerX / width));
-          const centerIdx = normX * (STRING_N - 1);
+        if (distY < 56 && Math.abs(dy) > 0.6) {
           const impulse = Math.max(-16, Math.min(16, dy * 0.85));
-          for (let i = 0; i < STRING_N; i++) {
-            const d = Math.abs(i - centerIdx);
-            if (d < 8) {
-              const weight = Math.exp(-(d * d) / 10);
-              vel[i] += impulse * weight * 0.45;
-            }
-          }
+          injectImpulseAtScreenX(pointerX, impulse * 0.45);
         }
       }
 
@@ -283,14 +379,7 @@ onPage((signal, cleanup) => {
       const clickX = event.clientX - rect.left;
       const clickY = event.clientY - rect.top;
       if (Math.abs(clickY - height * 0.5) < 90 && width > 0) {
-        const centerIdx =
-          Math.max(0, Math.min(1, clickX / width)) * (STRING_N - 1);
-        for (let i = 0; i < STRING_N; i++) {
-          const d = Math.abs(i - centerIdx);
-          if (d < 10) {
-            vel[i] -= 18 * Math.exp(-(d * d) / 12);
-          }
-        }
+        injectImpulseAtScreenX(clickX, -18);
       }
     },
     { signal },
@@ -336,8 +425,12 @@ onPage((signal, cleanup) => {
     const rect = canvas.getBoundingClientRect();
     width = Math.max(1, rect.width);
     height = Math.max(1, rect.height);
-    canvas.width = Math.round(width * dpr);
-    canvas.height = Math.round(height * dpr);
+    const targetW = Math.round(width * dpr);
+    const targetH = Math.round(height * dpr);
+    if (canvas.width !== targetW || canvas.height !== targetH) {
+      canvas.width = targetW;
+      canvas.height = targetH;
+    }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     if (!desktopQuery.matches) {
@@ -351,14 +444,13 @@ onPage((signal, cleanup) => {
       stage.style.transform = `translate3d(${-currentX.toFixed(2)}px, 0, 0)`;
     }
     syncRailUI();
-    if (reducedMotionQuery.matches) drawFrame(0, 0);
+    drawFrame(typeof performance !== "undefined" ? performance.now() : 0, 0);
   };
 
   // Sharp ECG kernel centered around normalized dx (in world px)
   const ecgSample = (dx: number, dir: number, amp: number) => {
     const adx = Math.abs(dx);
     if (adx > 96) return 0;
-    // P-wave + Q dip + sharp R-peak + S overshoot + T-wave
     const p = Math.exp(-((dx + 48) * (dx + 48)) / 90) * 5;
     const q = -Math.exp(-((dx + 14) * (dx + 14)) / 24) * 7;
     const r = Math.exp(-(dx * dx) / 36) * amp;
@@ -378,6 +470,8 @@ onPage((signal, cleanup) => {
     const accentColor =
       styles.getPropertyValue("--accent").trim() || "#ff4d00";
     const bgColor = styles.getPropertyValue("--bg").trim() || "#070707";
+    const stemColor =
+      styles.getPropertyValue("--line-strong").trim() || lineColor;
     const isDark = document.documentElement.dataset.theme === "dark";
 
     const bridge = (
@@ -396,6 +490,17 @@ onPage((signal, cleanup) => {
       mobileScrollSpeed *= 0.9;
       const energy = audioLevel * 14 + mobileScrollSpeed * 0.45;
       beatClock += dtSec * (1.06 + energy * 0.04);
+
+      // Vertical tick ruler
+      ctx.strokeStyle = isDark ? "rgba(255,255,255,0.08)" : "rgba(10,10,10,0.08)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let y = 0; y <= height; y += 24) {
+        const len = y % 120 === 0 ? 7 : 3;
+        ctx.moveTo(spineX - len, y);
+        ctx.lineTo(spineX, y);
+      }
+      ctx.stroke();
 
       ctx.beginPath();
       for (let i = 0; i <= steps; i++) {
@@ -419,7 +524,6 @@ onPage((signal, cleanup) => {
       ctx.lineWidth = 1.35;
       ctx.stroke();
 
-      // Traveling signal dot on mobile spine
       if (!reducedMotionQuery.matches) {
         const dotY = ((beatClock * 110) % height + height) % height;
         ctx.beginPath();
@@ -434,7 +538,6 @@ onPage((signal, cleanup) => {
     const midY = height * 0.5;
     const maxScroll = getMaxScroll();
 
-    // Update spring inertia scroll
     if (!reducedMotionQuery.matches) {
       const prevX = currentX;
       const diff = targetX - currentX;
@@ -475,7 +578,6 @@ onPage((signal, cleanup) => {
         vel[i] += force;
         disp[i] += vel[i];
       }
-      // Propagate ripples cleanly to neighbors
       for (let pass = 0; pass < 2; pass++) {
         for (let i = 1; i < STRING_N - 1; i++) {
           const avg = (disp[i - 1] + disp[i + 1]) * 0.5;
@@ -486,11 +588,72 @@ onPage((signal, cleanup) => {
       sweepPhase = (sweepPhase + dtSec * (0.22 + speedNorm * 0.25)) % 1;
     }
 
+    // LAYER 1: Slow-Parallax Oscilloscope Coordinate Grid & Giant Faint Watermarks
+    const parallaxX = currentX * 0.35;
+    const gridSpacing = 180;
+    const firstGrid = Math.floor(parallaxX / gridSpacing) * gridSpacing;
+    ctx.strokeStyle = isDark ? "rgba(255,255,255,0.032)" : "rgba(10,10,10,0.042)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let gx = firstGrid; gx <= parallaxX + width + gridSpacing; gx += gridSpacing) {
+      const sx = gx - parallaxX;
+      ctx.moveTo(sx, 0);
+      ctx.lineTo(sx, height);
+    }
+    ctx.stroke();
+
+    // Precision crosshairs (+) at coordinate intersections
+    ctx.strokeStyle = isDark ? "rgba(255,255,255,0.09)" : "rgba(10,10,10,0.10)";
+    ctx.beginPath();
+    for (let gx = firstGrid; gx <= parallaxX + width + gridSpacing; gx += gridSpacing) {
+      const sx = gx - parallaxX;
+      for (const cy of [midY - 125, midY + 125]) {
+        ctx.moveTo(sx - 4, cy);
+        ctx.lineTo(sx + 4, cy);
+        ctx.moveTo(sx, cy - 4);
+        ctx.lineTo(sx, cy + 4);
+      }
+    }
+    ctx.stroke();
+
+    // Giant sculptural faint watermark typography drifting in background parallax
+    ctx.save();
+    ctx.fillStyle = isDark ? "rgba(255,255,255,0.026)" : "rgba(10,10,10,0.034)";
+    ctx.font = '600 120px "Iowan Old Style", "Songti SC", Georgia, serif';
+    ctx.textBaseline = "middle";
+    const watermarks = [
+      { text: "SAVE", x: 110, y: midY - 140 },
+      { text: "POINT", x: 520, y: midY + 148 },
+      { text: "SIGNAL", x: 1020, y: midY - 140 },
+      { text: "2026", x: 1480, y: midY + 148 },
+    ];
+    for (const wm of watermarks) {
+      const sx = wm.x - parallaxX;
+      if (sx > -500 && sx < width + 200) {
+        ctx.fillText(wm.text, sx, wm.y);
+      }
+    }
+    ctx.restore();
+
+    // Fine centerline oscilloscope ruler ticks
+    const tickSpacing = 24;
+    const firstTick = Math.floor(currentX / tickSpacing) * tickSpacing;
+    ctx.strokeStyle = isDark ? "rgba(255,255,255,0.08)" : "rgba(10,10,10,0.085)";
+    ctx.beginPath();
+    for (let tx = firstTick; tx <= currentX + width + tickSpacing; tx += tickSpacing) {
+      const sx = tx - currentX;
+      const major = tx % 120 === 0;
+      const len = major ? 7 : 3;
+      ctx.moveTo(sx, midY - len);
+      ctx.lineTo(sx, midY + len);
+    }
+    ctx.stroke();
+
     const sampleY = (screenX: number) => {
       const worldX = screenX + currentX;
       let y = midY;
 
-      // 1. Station architectural ECG waveforms
+      // Station ECG anchor waves
       const baseAmp = 21 + speedNorm * 10 + audioLevel * 8;
       for (let i = 0; i < stationPositions.length; i++) {
         const sx = stationPositions[i];
@@ -499,14 +662,17 @@ onPage((signal, cleanup) => {
       }
 
       if (!reducedMotionQuery.matches) {
-        // 2. Living resting pulse ripple traveling along baseline
+        // Traveling resting heartbeat ripple
         const pulseScreenX = sweepPhase * width;
         const dPulse = screenX - pulseScreenX;
-        if (Math.abs(dPulse) < 60) {
-          y += Math.sin((dPulse / 60) * Math.PI) * Math.exp(-(dPulse * dPulse) / 480) * (7 + audioLevel * 10);
+        if (Math.abs(dPulse) < 64) {
+          y +=
+            Math.sin((dPulse / 64) * Math.PI) *
+            Math.exp(-(dPulse * dPulse) / 500) *
+            (7 + audioLevel * 10);
         }
 
-        // 3. Real Web Audio frequency harmonics when playing
+        // Live Web Audio harmonic spectrum
         if (audioPlaying) {
           const norm = screenX / Math.max(1, width);
           let binEnergy = audioLevel;
@@ -522,7 +688,7 @@ onPage((signal, cleanup) => {
             Math.cos(screenX * 0.055 + now * 0.004) * (1.5 + binEnergy * 9);
         }
 
-        // 4. Cursor string pluck displacement
+        // Cursor spring displacement
         const idxFloat = (screenX / Math.max(1, width)) * (STRING_N - 1);
         const i0 = Math.max(0, Math.min(STRING_N - 2, Math.floor(idxFloat)));
         const frac = idxFloat - i0;
@@ -532,41 +698,83 @@ onPage((signal, cleanup) => {
       return y;
     };
 
-    // Draw subtle center coordinate reference hairline
-    ctx.beginPath();
-    ctx.moveTo(0, midY);
-    ctx.lineTo(width, midY);
-    ctx.strokeStyle = isDark ? "rgba(255,255,255,0.05)" : "rgba(10,10,10,0.06)";
-    ctx.lineWidth = 1;
-    ctx.stroke();
-
-    // Draw main living heartbeat trace
+    // Precompute primary trace Y samples across viewport width
     const stepPx = 3;
+    const cols = Math.ceil(width / stepPx) + 1;
+    const ys = new Float32Array(cols);
+    for (let c = 0; c < cols; c++) {
+      ys[c] = sampleY(Math.min(width, c * stepPx));
+    }
+
+    const headX = sweepPhase * width;
+
+    // LAYER 2: Subtle vertical modulation / spectrum hairlines from midY to wave envelope
+    ctx.lineWidth = 1;
+    for (let c = 0; c < cols; c += 4) {
+      const sx = Math.min(width, c * stepPx);
+      const dy = ys[c] - midY;
+      if (Math.abs(dy) < 1.5) continue;
+      const nearHead = !reducedMotionQuery.matches && sx <= headX && sx >= headX - 95;
+      ctx.strokeStyle = nearHead
+        ? isDark
+          ? "rgba(255,77,0,0.25)"
+          : "rgba(230,62,0,0.20)"
+        : isDark
+          ? "rgba(255,255,255,0.11)"
+          : "rgba(10,10,10,0.10)";
+      ctx.beginPath();
+      ctx.moveTo(sx, midY);
+      ctx.lineTo(sx, ys[c]);
+      ctx.stroke();
+    }
+
+    // LAYER 3: 2 Phase-lagged Ghost Echo Traces for analog depth
+    const echoes = [
+      { lagCols: 5, scale: 0.36, alphaDark: 0.09, alphaLight: 0.1 },
+      { lagCols: 2, scale: 0.64, alphaDark: 0.19, alphaLight: 0.18 },
+    ];
+    for (const echo of echoes) {
+      ctx.beginPath();
+      for (let c = 0; c < cols; c++) {
+        const sx = Math.min(width, c * stepPx);
+        const srcIdx = Math.max(0, c - echo.lagCols);
+        const ey = midY + (ys[srcIdx] - midY) * echo.scale;
+        if (c === 0) ctx.moveTo(sx, ey);
+        else ctx.lineTo(sx, ey);
+      }
+      ctx.strokeStyle = isDark
+        ? `rgba(244,244,242,${echo.alphaDark})`
+        : `rgba(10,10,10,${echo.alphaLight})`;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+
+    // LAYER 4: Primary Live Heartbeat Trace
     ctx.beginPath();
-    for (let sx = 0; sx <= width; sx += stepPx) {
-      const sy = sampleY(sx);
-      if (sx === 0) ctx.moveTo(sx, sy);
-      else ctx.lineTo(sx, sy);
+    for (let c = 0; c < cols; c++) {
+      const sx = Math.min(width, c * stepPx);
+      if (c === 0) ctx.moveTo(sx, ys[c]);
+      else ctx.lineTo(sx, ys[c]);
     }
     ctx.strokeStyle = audioPlaying || speedNorm > 0.05 ? activeColor : lineColor;
     ctx.lineWidth = 1.45;
     ctx.stroke();
 
-    // Highlight active segment near cursor or traveling head in Signal Orange
+    // Signal Orange sweep segment + phosphor head dot
     if (!reducedMotionQuery.matches) {
-      const headX = sweepPhase * width;
       const headStart = Math.max(0, headX - 95);
+      const startCol = Math.max(0, Math.floor(headStart / stepPx));
+      const endCol = Math.min(cols - 1, Math.ceil(headX / stepPx));
       ctx.beginPath();
-      for (let sx = headStart; sx <= headX; sx += stepPx) {
-        const sy = sampleY(sx);
-        if (sx === headStart) ctx.moveTo(sx, sy);
-        else ctx.lineTo(sx, sy);
+      for (let c = startCol; c <= endCol; c++) {
+        const sx = Math.min(width, c * stepPx);
+        if (c === startCol) ctx.moveTo(sx, ys[c]);
+        else ctx.lineTo(sx, ys[c]);
       }
       ctx.strokeStyle = accentColor;
-      ctx.lineWidth = 1.75;
+      ctx.lineWidth = 1.8;
       ctx.stroke();
 
-      // Glowing phosphor carrier dot
       const headY = sampleY(headX);
       ctx.save();
       if (isDark) {
@@ -580,19 +788,19 @@ onPage((signal, cleanup) => {
       ctx.restore();
     }
 
-    // Draw dynamic stems + pinpoint anchor dots for each visible station directly to live peak/trough
+    // Dual dynamic stems (connecting BOTH above block and below mirror block to exact wave anchor)
     const stemEdgeOffset = window.innerHeight <= 750 ? 38 : 52;
-    const stemColor = styles.getPropertyValue("--line-strong").trim() || lineColor;
     stationPositions.forEach((worldSx, idx) => {
       const screenSx = worldSx - currentX;
       if (screenSx < -40 || screenSx > width + 40) return;
       const anchorY = sampleY(screenSx);
-      const edgeY = midY + stationDirs[idx] * stemEdgeOffset;
+      const topEdgeY = midY - stemEdgeOffset;
+      const bottomEdgeY = midY + stemEdgeOffset;
       const isActive = hoveredStation === idx || pinnedStation === idx;
 
       ctx.beginPath();
-      ctx.moveTo(screenSx, edgeY);
-      ctx.lineTo(screenSx, anchorY);
+      ctx.moveTo(screenSx, topEdgeY);
+      ctx.lineTo(screenSx, bottomEdgeY);
       ctx.strokeStyle = isActive ? accentColor : stemColor;
       ctx.lineWidth = 1;
       ctx.stroke();
@@ -614,7 +822,6 @@ onPage((signal, cleanup) => {
       ctx.stroke();
     });
 
-    // Subtle cursor proximity crosshair when near baseline
     if (pointerActive && !reducedMotionQuery.matches && Math.abs(pointerY - midY) < 70) {
       const lineY = sampleY(pointerX);
       ctx.beginPath();
@@ -656,6 +863,7 @@ onPage((signal, cleanup) => {
 
   const ro = new ResizeObserver(resize);
   ro.observe(viewport);
+  ro.observe(canvas);
 
   const themeObserver = new MutationObserver(() => {
     if (reducedMotionQuery.matches) drawFrame(0, 0);
