@@ -2,34 +2,23 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { githubProfileUrl } from '../consts';
 ---
-<BaseLayout title="关于" description="关于 Wynn，一个喜欢写代码、做小工具、记录思考的人。" section="关于">
-  <section class="page sheet-card">
-    <header class="page-header">
-      <h1>关于 Wynn</h1>
-      <p>写代码、做桌面与 AI 小工具，顺手把过程记下来。</p>
-    </header>
-    <div class="about-grid" data-pagefind-body>
+<BaseLayout title="关于" description="Wynn" section="关于">
+  <section class="page sheet-card about-sheet">
+    <div class="about-card" data-pagefind-body>
       <div class="about-portrait">
         <div class="cat-pin cat-pin--static">
           <span class="cat-pin-plate">
             <img src="/images/avatar.png" alt="Wynn 的像素黑猫头像" width="128" height="128" />
           </span>
         </div>
-        <span class="about-handle">Wynn · Save Point</span>
       </div>
-      <div class="about-sections">
-        <div class="about-copy">
-          <h2>做点趁手的工具</h2>
-          <p>平时写后端与桌面应用，也折腾 AI Agent 和前端交互。比起追热门概念，更在意工具是不是顺手、稳定、有自己的脾气。</p>
-          <div class="about-links">
-            <a class="text-link" href={githubProfileUrl} target="_blank" rel="noreferrer">GitHub ↗</a>
-            <a class="text-link" href="/projects/">看做过的项目 ↗</a>
-            <a class="text-link" href="/blog/">读一篇文章 ↗</a>
-          </div>
-        </div>
-        <div class="about-copy about-site">
-          <h2>关于这个小站</h2>
-          <p>首页放了平日常用的几个动作：检索、开关灯、听几首纯音乐，以及最近写下的文章和正在做的项目。正文用干净的单页排版，不加多余装饰。</p>
+      <div class="about-info">
+        <h1>Wynn</h1>
+        <div class="about-links">
+          <a class="text-link" href={githubProfileUrl} target="_blank" rel="noreferrer">GitHub ↗</a>
+          <a class="text-link" href="/projects/">项目 ↗</a>
+          <a class="text-link" href="/blog/">文章 ↗</a>
+          <a class="text-link" href="/rss.xml" data-astro-reload>RSS ↗</a>
         </div>
       </div>
     </div>

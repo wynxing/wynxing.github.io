@@ -714,11 +714,12 @@ summary {
 }
 
 .cd-btn {
-  display: grid;
+  display: inline-grid;
   place-items: center;
   width: 28px;
   height: 28px;
-  padding: 6px;
+  padding: 0;
+  line-height: 0;
   border-radius: 50%;
   color: var(--alu-text);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.45), rgba(0, 0, 0, 0.08));
@@ -727,6 +728,11 @@ summary {
     inset 0 1px 0 rgba(255, 255, 255, 0.65),
     0 2px 4px rgba(15, 23, 42, 0.14);
   transition: transform 0.12s var(--ease-tactile), border-color 0.15s ease, color 0.15s ease;
+}
+
+.cd-btn .app-symbol {
+  width: 13px;
+  height: 13px;
 }
 
 :root[data-theme="dark"] .cd-btn {
@@ -778,11 +784,18 @@ summary {
   margin-left: auto;
   width: 24px;
   height: 24px;
-  padding: 5px;
+  padding: 0;
+}
+
+.music-expand .app-symbol {
+  width: 12px;
+  height: 12px;
+  transform: rotate(180deg);
+  transition: transform 0.18s var(--ease-tactile);
 }
 
 .music-expand[aria-expanded="true"] .app-symbol {
-  transform: rotate(180deg);
+  transform: rotate(0deg);
 }
 
 .cd-eq-strip {
@@ -992,7 +1005,12 @@ input[type="range"] {
 .music-player.is-mini .cd-btn {
   width: 24px;
   height: 24px;
-  padding: 4px;
+  padding: 0;
+}
+
+.music-player.is-mini .cd-btn .app-symbol {
+  width: 11px;
+  height: 11px;
 }
 
 .music-player.is-mini .play-button {
@@ -2518,59 +2536,46 @@ a.tag:hover {
 /* ==========================================================================
    About, Search & 404
    ========================================================================== */
-.about-grid {
-  display: grid;
-  grid-template-columns: 220px minmax(0, 1fr);
+.about-sheet {
+  padding-block: clamp(32px, 5vw, 56px);
+}
+
+.about-card {
+  display: flex;
+  align-items: center;
   gap: 36px;
-  align-items: start;
 }
 
 .about-portrait {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   padding: 20px;
-  border-radius: 14px;
+  border-radius: 16px;
   background: var(--sheet-subtle);
   border: 1px solid var(--line);
+  flex: none;
 }
 
-.about-handle {
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--muted);
-}
-
-.about-sections {
+.about-info {
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: 16px;
 }
 
-.about-copy h2 {
-  font-size: 22px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  margin: 0 0 10px;
-}
-
-.about-copy p {
-  font-size: 15px;
-  color: var(--text-soft);
-  line-height: 1.8;
-  margin-bottom: 14px;
+.about-info h1 {
+  font-size: clamp(32px, 4vw, 44px);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  margin: 0;
 }
 
 .about-links {
   display: flex;
   flex-wrap: wrap;
-  gap: 18px;
-}
-
-.about-site {
-  padding-top: 24px;
-  border-top: 1px solid var(--line);
+  gap: 12px 20px;
 }
 
 /* Search */
@@ -2800,9 +2805,10 @@ html .search-panel .pagefind-ui .pagefind-ui__result-excerpt mark {
     border-radius: 14px;
   }
 
-  .about-grid {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 20px;
+  .about-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 22px;
   }
 
   .adjacent-posts {
