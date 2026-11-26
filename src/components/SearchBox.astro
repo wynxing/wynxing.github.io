@@ -1,4 +1,4 @@
-<section class="search-panel glass">
+<section class="search-panel">
   <div id="search"></div>
   <p class="muted" data-search-status role="status">正在准备搜索…</p>
   <noscript><p>搜索需要启用 JavaScript，也可以<a href="/blog/">直接浏览文章</a>。</p></noscript>
@@ -6,29 +6,46 @@
 <script>
   import { onPage } from '../scripts/lifecycle';
   onPage((signal, cleanup) => {
-  const status = document.querySelector<HTMLElement>('[data-search-status]');
-  if (!status) return;
-  const pagefindUiPath = '/pagefind/pagefind-ui.js';
-  const link = document.createElement('link');
-  link.rel = 'stylesheet';
-  link.href = '/pagefind/pagefind-ui.css';
-  if (!document.querySelector('link[href="/pagefind/pagefind-ui.css"]')) document.head.append(link);
-  import(/* @vite-ignore */ pagefindUiPath).then(() => {
-    if (signal.aborted) return;
-    const ui = window as typeof window & { PagefindUI?: new (options: Record<string, unknown>) => { destroy?: () => void } };
-    if (!ui.PagefindUI) throw new Error('Search unavailable');
-    const search = new ui.PagefindUI({
-      element: '#search', showSubResults: true, showImages: false,
-      translations: {
-        placeholder: '搜索文章和项目', clear_search: '清空', load_more: '加载更多',
-        search_label: '搜索', filters_label: '筛选', zero_results: '没有找到结果，试试其他关键词。',
-        many_results: '[COUNT] 个结果', one_result: '[COUNT] 个结果', searching: '搜索中…'
+    const status = document.querySelector<HTMLElement>('[data-search-status]');
+    if (!status) return;
+    const pagefindUiPath = '/pagefind/pagefind-ui.js';
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = '/pagefind/pagefind-ui.css';
+    if (!document.querySelector('link[href="/pagefind/pagefind-ui.css"]')) document.head.append(link);
+    import(/* @vite-ignore */ pagefindUiPath).then(() => {
+      if (signal.aborted) return;
+      const ui = window as typeof window & {
+        PagefindUI?: new (options: Record<string, unknown>) => {
+          destroy?: () => void;
+          triggerSearch?: (term: string) => void;
+        };
+      };
+      if (!ui.PagefindUI) throw new Error('Search unavailable');
+      const search = new ui.PagefindUI({
+        element: '#search',
+        showSubResults: true,
+        showImages: false,
+        translations: {
+          placeholder: '搜索文章和项目',
+          clear_search: '清空',
+          load_more: '加载更多',
+          search_label: '搜索',
+          filters_label: '筛选',
+          zero_results: '没有找到结果，试试其他关键词。',
+          many_results: '[COUNT] 个结果',
+          one_result: '[COUNT] 个结果',
+          searching: '搜索中…',
+        },
+      });
+      const initialQuery = new URLSearchParams(location.search).get('q')?.trim();
+      if (initialQuery) {
+        search.triggerSearch?.(initialQuery);
       }
+      cleanup(() => search.destroy?.());
+      status?.remove();
+    }).catch(() => {
+      if (!signal.aborted && status) status.textContent = '搜索暂时无法加载，请刷新重试，或从导航进入文章列表。';
     });
-    cleanup(() => search.destroy?.());
-    status?.remove();
-  }).catch(() => {
-    if (!signal.aborted && status) status.textContent = '搜索暂时无法加载，请刷新重试，或从导航进入文章列表。';
-  });
   });
 </script>

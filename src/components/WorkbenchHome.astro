@@ -1,0 +1,277 @@
+---
+import AppIcon from './AppIcon.astro';
+import MusicPlayer from './MusicPlayer.astro';
+import ThemeToggle from './ThemeToggle.astro';
+import { githubProfileUrl } from '../consts';
+
+export interface HomeProject {
+  title: string;
+  href: string;
+  description: string;
+  status: string;
+  statusText: string;
+  stack: string;
+}
+
+export interface HomePost {
+  title: string;
+  href: string;
+  date: string;
+  datetime: string;
+  description: string;
+  category: string;
+  readingTime: string;
+}
+
+interface Props {
+  projects: HomeProject[];
+  posts: HomePost[];
+}
+
+const { projects, posts } = Astro.props;
+const navLinks = [
+  ['/blog/', '文章'],
+  ['/projects/', '项目'],
+  ['/about/', '关于'],
+  ['/search/', '搜索'],
+];
+const searchSeed = [
+  ...projects.map((p) => ({
+    title: p.title,
+    href: p.href,
+    meta: `项目 · ${p.statusText}`,
+    excerpt: p.description,
+  })),
+  ...posts.map((p) => ({
+    title: p.title,
+    href: p.href,
+    meta: `${p.category} · ${p.date}`,
+    excerpt: p.description,
+  })),
+];
+---
+
+<section class="workbench-home" data-workbench-home aria-labelledby="workbench-title">
+  <div class="workbench-shell">
+    <header class="wb-row-top">
+      <div class="wb-identity">
+        <h1 id="workbench-title">Wynn</h1>
+        <a
+          href="/about/"
+          class="cat-pin"
+          data-cat-pin
+          aria-label="关于 Wynn"
+          title="关于 Wynn"
+        >
+          <span class="cat-pin-plate">
+            <img src="/images/avatar.png" alt="Wynn 的像素黑猫头像" width="76" height="76" />
+          </span>
+          <span class="cat-pin-sheen" aria-hidden="true"></span>
+        </a>
+      </div>
+
+      <div class="wb-music-slot" id="home-music-slot">
+        <MusicPlayer />
+      </div>
+    </header>
+
+    <div class="wb-row-search">
+      <form
+        class="wb-search-module"
+        role="search"
+        action="/search/"
+        method="get"
+        data-wb-search-form
+        data-search-seed={JSON.stringify(searchSeed)}
+      >
+        <div class="wb-search-bezel">
+          <span class="wb-search-icon" aria-hidden="true">
+            <AppIcon name="magnifying-glass" />
+          </span>
+          <input
+            type="search"
+            name="q"
+            class="wb-search-input"
+            data-wb-search-input
+            placeholder="搜索文章与项目…"
+            autocomplete="off"
+            spellcheck="false"
+            aria-label="搜索文章与项目"
+            aria-controls="wb-search-results"
+            aria-expanded="false"
+          />
+          <div class="wb-keycaps">
+            <kbd class="keycap" data-keycap="mod" aria-hidden="true">⌘</kbd>
+            <kbd class="keycap" data-keycap="k" aria-hidden="true">K</kbd>
+            <button type="submit" class="keycap keycap-enter" data-keycap="enter" aria-label="前往搜索页">
+              ↵
+            </button>
+          </div>
+        </div>
+        <div
+          id="wb-search-results"
+          class="wb-search-results"
+          data-wb-search-results
+          role="region"
+          aria-label="快速搜索结果"
+          hidden
+        ></div>
+      </form>
+    </div>
+
+    <div class="wb-row-deck">
+      <!-- Writing Tabbed Folder Stack -->
+      <section class="wb-folder-module" aria-labelledby="wb-writing-heading">
+        <a href="/blog/" class="folder-tab" id="wb-writing-heading">
+          <span>文章</span>
+          <span class="folder-tab-en">Writing</span>
+          <span class="folder-tab-arrow" aria-hidden="true">↗</span>
+        </a>
+        <div class="folder-well">
+          {posts.length > 0 ? (
+            <ol class="folder-stack">
+              {posts.map((post, idx) => (
+                <li class="folder-card" style={`--card-idx: ${idx};`}>
+                  <a
+                    href={post.href}
+                    class="folder-card-link"
+                    data-latest-entry={idx === 0 ? '' : undefined}
+                  >
+                    <strong class="folder-card-title">{post.title}</strong>
+                    <span class="folder-card-meta">
+                      <span>{post.category}</span>
+                      <span aria-hidden="true">·</span>
+                      <span>{post.readingTime}</span>
+                      <span aria-hidden="true">·</span>
+                      <time datetime={post.datetime}>{post.date}</time>
+                    </span>
+                  </a>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <div class="folder-empty">
+              <p>暂时还没有公开的文章。</p>
+            </div>
+          )}
+        </div>
+      </section>
+
+      <!-- Physical Theme Rocker Module -->
+      <div class="wb-theme-module" aria-label="外观主题开关">
+        <span class="wb-hardware-label" aria-hidden="true">THEME</span>
+        <div class="rocker-housing">
+          <button
+            type="button"
+            class="rocker-switch"
+            data-theme-rocker
+            aria-label="切换浅色或深色主题"
+            aria-pressed="false"
+          >
+            <span class="rocker-face">
+              <span class="rocker-led" aria-hidden="true"></span>
+              <span class="rocker-glyph" aria-hidden="true">
+                <svg class="glyph-sun" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                  <circle cx="9" cy="9" r="3.2" />
+                  <path d="M9 2v1.6M9 14.4V16M2 9h1.6M14.4 9H16M4.05 4.05l1.15 1.15M12.8 12.8l1.15 1.15M13.95 4.05 12.8 5.2M5.2 12.8 4.05 13.95" />
+                </svg>
+                <svg class="glyph-moon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14.5 11.2A5.8 5.8 0 0 1 6.8 3.5a5.8 5.8 0 1 0 7.7 7.7Z" />
+                </svg>
+              </span>
+            </span>
+          </button>
+        </div>
+        <button type="button" class="rocker-auto-btn" data-theme-auto aria-pressed="false">
+          跟随系统
+        </button>
+        <ThemeToggle srOnlySelect />
+      </div>
+
+      <!-- Dynamic Frosted Acrylic Projects Tray -->
+      <section class="wb-projects-module" data-workbench-projects aria-labelledby="wb-projects-heading">
+        <div class="wb-tray-header">
+          <a href="/projects/" class="tray-label-link" id="wb-projects-heading">
+            <span>项目</span>
+            <span class="tray-label-en">Projects</span>
+            <span aria-hidden="true">↗</span>
+          </a>
+        </div>
+        <div class="acrylic-tray">
+          {projects.length > 0 ? (
+            <ul class="specimen-grid">
+              {projects.map((project, idx) => (
+                <li class="specimen-item">
+                  <a href={project.href} class="specimen-card" data-status={project.status}>
+                    <div class="specimen-top">
+                      <span
+                        class:list={[
+                          'specimen-led',
+                          project.status === 'shipped' ? 'is-shipped' : 'is-building',
+                        ]}
+                        aria-hidden="true"
+                      ></span>
+                      <strong class="specimen-title">{project.title}</strong>
+                      <span class="specimen-more" aria-hidden="true">•••</span>
+                    </div>
+                    <div class="specimen-bottom">
+                      <span class="specimen-meta">{project.statusText}</span>
+                      <span class="specimen-glyph" aria-hidden="true">
+                        {idx % 4 === 0 && (
+                          <svg viewBox="0 0 36 36" fill="none" stroke="currentColor" stroke-width="1.2">
+                            <circle cx="18" cy="18" r="12" opacity="0.45" />
+                            <circle cx="18" cy="18" r="7.5" opacity="0.7" />
+                            <path d="M18 18 29 12v10L18 18Z" />
+                          </svg>
+                        )}
+                        {idx % 4 === 1 && (
+                          <svg viewBox="0 0 36 36" fill="none" stroke="currentColor" stroke-width="1.2">
+                            <rect x="7" y="9" width="8" height="8" rx="1.5" />
+                            <rect x="21" y="9" width="8" height="8" rx="1.5" />
+                            <rect x="14" y="21" width="8" height="8" rx="1.5" />
+                            <path d="M15 13h6M13 17l3 4M23 17l-3 4" opacity="0.65" />
+                          </svg>
+                        )}
+                        {idx % 4 === 2 && (
+                          <svg viewBox="0 0 36 36" fill="none" stroke="currentColor" stroke-width="1.2">
+                            <path d="M18 7 29 12.5 18 18 7 12.5 18 7Z" />
+                            <path d="M7 18l11 5.5L29 18" opacity="0.7" />
+                            <path d="M7 23.5 18 29l11-5.5" opacity="0.45" />
+                          </svg>
+                        )}
+                        {idx % 4 === 3 && (
+                          <svg viewBox="0 0 36 36" fill="none" stroke="currentColor" stroke-width="1.2">
+                            <polygon points="18,6 28,12 28,24 18,30 8,24 8,12" opacity="0.8" />
+                            <path d="M18 6v24M8 12l20 12M28 12 8 24" opacity="0.4" />
+                          </svg>
+                        )}
+                      </span>
+                    </div>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p class="tray-empty">暂时还没有公开的项目。</p>
+          )}
+        </div>
+      </section>
+    </div>
+
+    <footer class="wb-utility-bar">
+      <nav class="desktop-nav" aria-label="主导航">
+        {navLinks.map(([href, label]) => (
+          <a href={href}>{label}</a>
+        ))}
+      </nav>
+      <div class="wb-utility-links">
+        <a href={githubProfileUrl} target="_blank" rel="noreferrer">GitHub ↗</a>
+        <a href="/rss.xml" data-astro-reload>RSS ↗</a>
+        <a href="/admin/" data-astro-reload>写作后台</a>
+        <span class="wb-copyright">© {new Date().getFullYear()} Wynn</span>
+      </div>
+    </footer>
+  </div>
+</section>
+
+<script>import '../scripts/workbench-home';</script>

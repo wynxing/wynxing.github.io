@@ -1,8 +1,8 @@
 # Wynn's Save Point
 
-Wynn 的个人网站：一个可以认识 Wynn、看看他的作品、读文章，也可以在实时物理心率线上停留、听歌并交互的个人主页。文章是其中一个板块，首页以高对比无框雕塑排版、顶部悬浮硬件感音频面板与实时 Canvas 脉搏线组织体验。
+Wynn 的个人网站：一个将搜索、主题切换、音乐播放、文章与项目做成真实可交互工作台组件，同时保持内页纯净单页阅读体验的个人主页。
 
-当前视觉方向为「Live Physical Signal」（浅色粉笔白 / 深色极夜黑 + 精密信号橙、全站去卡片边框、顶部悬浮 Web Audio 联动硬件播放器、随滚轮速度与音乐改变 BPM 的真实临床心电监护扫描线；手机端转为左侧纵向心电扫描脊线）。保留站名、黑猫头像和真实内容。
+当前视觉方向为「Tactile Spatial Studio Workbench」（浅色冷钛灰微点阵 `#EFF2F6` / 深色曜石炭微点阵 `#0C0E13` + 纯净阅读单页 + 钴蓝与薄荷绿指示色 + 机械搜索条、实体主题翘板开关、半透明拉丝铝 Mini-CD 播放器、文件夹叠卡与磨砂亚克力项目展盒）。保留站名、像素黑猫头像和真实内容。
 
 ## 当前定位与文档入口
 
@@ -41,25 +41,28 @@ pnpm deploy
 
 ## Appearance and reading
 
-The homepage is a borderless high-contrast gallery (`#f5f5f3` light / `#070707`
-dark with `#e63e00` / `#ff4d00` signal orange accents and subtle matte grain):
-a slim top utility bar, a centered Braun-inspired floating audio deck wired into
-Web Audio `AnalyserNode`, the original pixel black-cat avatar, and a live 60fps
-HTML5 Canvas clinical ECG monitor sweep (sharp upward P-QRS-T waveforms, flat
-resting baselines, phosphor-decay trail with an erase gap ahead of the scan head,
-a soft cardiac-breathing ambient light field, and a world-locked 5:1 ECG chart
-paper micro-grid revealed locally around the scan head, cursor, and click ripples)
-connecting four clean borderless stations (`Wynn`, `项目`, `文章`, `存档`) with
-cross-line live mirror previews for works and essays. Desktop scrolling uses
-damped spring inertia and modulates live BPM, moving the cursor near the
-baseline provides magnetic probe tension and plucks the taut spring wire,
-clicking the line spawns ripple rings and accelerates the heartbeat before
-relaxing, hovering items plucks the station node, and active audio gently
-modulates heart rate and pulse amplitude. Inner pages render directly on the full-bleed
-canvas with serif headings and monospace metadata. The default theme follows the
-OS; explicit choices persist under `theme`. Mobile layouts draw a live vertical
-ECG sweep along the left margin and keep a compact collapsible top audio deck.
-Reduced-motion and reduced-transparency preferences are respected.
+The homepage is a Tactile Spatial Studio Workbench (`#eff2f6` light / `#0c0e13`
+dark precision dot-grid surface with `#2563eb` / `#3b82f6` cobalt blue and
+`#00c982` / `#10e896` mint LED accents, self-hosted `Plus Jakarta Sans Variable`
+and `JetBrains Mono Variable`):
+- `Wynn` identity title paired with the original pixel black-cat avatar mounted
+  inside a glossy die-cut acrylic pin badge linking to `/about/`.
+- A brushed-aluminum and frosted-polycarbonate Mini-CD player wired into Web
+  Audio `AnalyserNode`, featuring a rotating optical disc and expandable
+  timeline/volume drawer; on inner pages it docks cleanly into the single top
+  navigation bar as a compact brushed-metal capsule.
+- A milled dark-graphite mechanical search bar (`Cmd/Ctrl+K` or `/`) with
+  tactile keycaps that lazy-loads Pagefind for instant dropdown results and
+  carries queries into `/search/?q=...`.
+- A physical `THEME` rocker switch with a mint status LED and an `AUTO`
+  system-sync reset button, synchronized with the OS theme listener and `theme`
+  localStorage preference.
+- A tabbed `Writing` folder card stack and a frosted-acrylic `Projects` specimen
+  tray that dynamically adapt to published content.
+- Inner pages render as crisp floating reading sheets (`.sheet-card`) over the
+  dot-grid studio surface, with dark hardware-styled code blocks, cobalt-dot
+  floating table of contents, reading progress bar, and responsive mobile
+  layouts. Reduced-motion and reduced-transparency preferences are respected.
 
 Astro ClientRouter preserves a single audio element across internal navigation.
 Page-scoped listeners, search instances and observers are released before swaps

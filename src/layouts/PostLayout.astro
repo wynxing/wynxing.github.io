@@ -2,7 +2,6 @@
 import { getCollection, type CollectionEntry } from 'astro:content';
 import BaseLayout from './BaseLayout.astro';
 import GiscusComments from '../components/GiscusComments.astro';
-import PulseMark from '../components/PulseMark.astro';
 import TableOfContents from '../components/TableOfContents.astro';
 import { formatDate, readingTime, tagHref, byDateDesc, byProjectOrder, entryHref, categoryLabel, statusWithVersion } from '../utils/content';
 
@@ -25,6 +24,7 @@ const siblings = isProject
 const position = siblings.findIndex(sibling => sibling.id === entry.id);
 const previous = isProject ? siblings[position - 1] : siblings[position + 1];
 const next = isProject ? siblings[position + 1] : siblings[position - 1];
+const hasToc = headings.some(heading => heading.depth === 2 || heading.depth === 3);
 ---
 
 <BaseLayout
@@ -33,60 +33,78 @@ const next = isProject ? siblings[position + 1] : siblings[position - 1];
   section={section}
   showProgress
 >
-  <article class="page article" data-reading-article>
-    <header class="article-header">
-      <a class="back-link" href={`/${entry.collection}/`}>← 返回{section}</a>
-      <h1>{entry.data.title}</h1>
-      <p class="standfirst">{entry.data.description}</p>
-      <div class="meta-line">
-        <time datetime={entry.data.date.toISOString()}>{formatDate(entry.data.date)}</time>
-        {!isProject && <span>{minutes}</span>}
-        {entry.data.updated && <span>更新 {formatDate(entry.data.updated)}</span>}
-        {'category' in entry.data && <span>{categoryLabel(entry.data.category)}</span>}
-        {'mood' in entry.data && <span>{entry.data.mood}</span>}
-        {'status' in entry.data && <span>{statusWithVersion(entry.data.status, project?.version)}</span>}
-      </div>
-      {project?.role && <p class="project-role">{project.role}</p>}
-      {project?.highlight && <p class="project-highlight"><span>代表成果</span>{project.highlight}</p>}
-      {entry.data.tags.length > 0 && (
-        <ul class="tag-list" aria-label="标签">
-          {entry.data.tags.map((tag) => (
-            <li>
-              <a class="tag" href={tagHref(entry.collection, tag)}>{tag}</a>
-            </li>
-          ))}
-        </ul>
-      )}
-      {project && (project.repo || project.demo) && (
-        <div class="project-links">
-          {project.repo && (
-            <a href={project.repo} target="_blank" rel="noreferrer">仓库</a>
+  <article class="page article sheet-card" data-reading-article>
+    <div class:list={['reading-layout', { 'has-toc': hasToc }]}>
+      <div class="article-main">
+        <header class="article-header">
+          <a class="back-link" href={`/${entry.collection}/`}>← 返回{section}</a>
+          <h1>{entry.data.title}</h1>
+          <p class="standfirst">{entry.data.description}</p>
+          <div class="meta-line">
+            <time datetime={entry.data.date.toISOString()}>{formatDate(entry.data.date)}</time>
+            {!isProject && <span>{minutes}</span>}
+            {entry.data.updated && <span>更新 {formatDate(entry.data.updated)}</span>}
+            {'category' in entry.data && <span>{categoryLabel(entry.data.category)}</span>}
+            {'mood' in entry.data && <span>{entry.data.mood}</span>}
+            {'status' in entry.data && <span>{statusWithVersion(entry.data.status, project?.version)}</span>}
+          </div>
+          {project?.role && <p class="project-role">{project.role}</p>}
+          {project?.highlight && <p class="project-highlight"><span>代表成果</span>{project.highlight}</p>}
+          {entry.data.tags.length > 0 && (
+            <ul class="tag-list" aria-label="标签">
+              {entry.data.tags.map((tag) => (
+                <li>
+                  <a class="tag" href={tagHref(entry.collection, tag)}>{tag}</a>
+                </li>
+              ))}
+            </ul>
           )}
-          {project.demo && (
-            <a href={project.demo} target="_blank" rel="noreferrer">演示</a>
+          {project && (project.repo || project.demo) && (
+            <div class="project-links">
+              {project.repo && (
+                <a href={project.repo} target="_blank" rel="noreferrer">仓库 ↗</a>
+              )}
+              {project.demo && (
+                <a href={project.demo} target="_blank" rel="noreferrer">演示 ↗</a>
+              )}
+            </div>
           )}
+          {project && project.stack.length > 0 && (
+            <ul class="tag-list" aria-label="技术栈">
+              {project.stack.map((item) => <li class="tag tag--stack">{item}</li>)}
+            </ul>
+          )}
+        </header>
+
+        <div class="prose" data-pagefind-body>
+          <slot />
         </div>
-      )}
-      {project && project.stack.length > 0 && (
-        <ul class="tag-list" aria-label="技术栈">
-          {project.stack.map((item) => <li class="tag">{item}</li>)}
-        </ul>
-      )}
-    </header>
-    <div class:list={['reading-layout', { 'has-toc': headings.some(heading => heading.depth === 2 || heading.depth === 3) }]}>
-      <TableOfContents headings={headings} isProject={isProject} />
-      <div class="prose" data-pagefind-body>
-        <slot />
+
+        <div class="article-end">
+          <div class="sheet-divider" aria-hidden="true">
+            <span class="sheet-divider-dot"></span>
+          </div>
+          {(previous || next) && (
+            <nav class="adjacent-posts" aria-label={isProject ? '相邻项目' : '相邻文章'}>
+              {previous && (
+                <a class="adjacent-card" href={entryHref(previous)}>
+                  <span class="adjacent-dir">{isProject ? '← 上一个项目' : '← 上一篇'}</span>
+                  <span class="adjacent-title">{previous.data.title}</span>
+                </a>
+              )}
+              {next && (
+                <a class="adjacent-card" href={entryHref(next)}>
+                  <span class="adjacent-dir">{isProject ? '下一个项目 →' : '下一篇 →'}</span>
+                  <span class="adjacent-title">{next.data.title}</span>
+                </a>
+              )}
+            </nav>
+          )}
+          <GiscusComments />
+        </div>
       </div>
-    </div>
-    <div class="article-end">
-      <PulseMark />
-      <p class="end-mark"><span aria-hidden="true">✳</span> {isProject ? '这个项目，存好了。' : '这一篇，存好了。'}</p>
-      {(previous || next) && <nav class="adjacent-posts" aria-label={isProject ? '相邻项目' : '相邻文章'}>
-        {previous && <a class="glass" href={entryHref(previous)}><span class="eyebrow">{isProject ? '← 上一个项目' : '← 上一篇'}</span><span>{previous.data.title}</span></a>}
-        {next && <a class="glass" href={entryHref(next)}><span class="eyebrow">{isProject ? '下一个项目 →' : '下一篇 →'}</span><span>{next.data.title}</span></a>}
-      </nav>}
-      <GiscusComments />
+
+      <TableOfContents headings={headings} isProject={isProject} />
     </div>
   </article>
 </BaseLayout>
@@ -94,50 +112,50 @@ const next = isProject ? siblings[position + 1] : siblings[position - 1];
 <script>
   import { onPage } from '../scripts/lifecycle';
   onPage((signal) => {
-  document.querySelectorAll<HTMLElement>('.prose pre').forEach(pre => {
-    if (pre.parentElement?.classList.contains('code-block')) return;
-    const wrapper = document.createElement('div');
-    wrapper.className = 'code-block';
-    pre.before(wrapper);
-    wrapper.append(pre);
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'copy-code';
-    button.textContent = '复制代码';
-    button.setAttribute('aria-live', 'polite');
-    wrapper.append(button);
-    button.addEventListener('click', async () => {
-      try {
-        await navigator.clipboard.writeText(pre.querySelector('code')?.textContent || pre.textContent || '');
-        button.textContent = '已复制';
-      } catch { button.textContent = '复制失败，请手动选择'; }
-      setTimeout(() => { button.textContent = '复制代码'; }, 2200);
+    document.querySelectorAll<HTMLElement>('.prose pre').forEach(pre => {
+      if (pre.parentElement?.classList.contains('code-block')) return;
+      const wrapper = document.createElement('div');
+      wrapper.className = 'code-block';
+      pre.before(wrapper);
+      wrapper.append(pre);
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'copy-code';
+      button.textContent = '复制代码';
+      button.setAttribute('aria-live', 'polite');
+      wrapper.append(button);
+      button.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(pre.querySelector('code')?.textContent || pre.textContent || '');
+          button.textContent = '已复制';
+        } catch { button.textContent = '复制失败，请手动选择'; }
+        setTimeout(() => { button.textContent = '复制代码'; }, 2200);
+      });
     });
-  });
-  document.querySelectorAll<HTMLTableElement>('.prose table').forEach(table => {
-    if (table.parentElement?.classList.contains('table-scroll')) return;
-    const wrapper = document.createElement('div');
-    wrapper.className = 'table-scroll';
-    wrapper.tabIndex = 0;
-    wrapper.setAttribute('role', 'region');
-    wrapper.setAttribute('aria-label', '表格，可横向滚动');
-    table.before(wrapper);
-    wrapper.append(table);
-  });
-  const progress = document.querySelector<HTMLElement>('.reading-progress span');
-  const prose = document.querySelector<HTMLElement>('.prose');
-  if (progress && prose) {
-    let queued = false;
-    const update = () => {
-      if (signal.aborted) return;
-      const rect = prose.getBoundingClientRect();
-      const total = Math.max(1, rect.height - innerHeight + 140);
-      progress.style.transform = `scaleX(${Math.min(1, Math.max(0, (140 - rect.top) / total))})`;
-      queued = false;
-    };
-    addEventListener('scroll', () => { if (!queued) { queued = true; requestAnimationFrame(update); } }, { passive: true, signal });
-    addEventListener('resize', update, { signal });
-    update();
-  }
+    document.querySelectorAll<HTMLTableElement>('.prose table').forEach(table => {
+      if (table.parentElement?.classList.contains('table-scroll')) return;
+      const wrapper = document.createElement('div');
+      wrapper.className = 'table-scroll';
+      wrapper.tabIndex = 0;
+      wrapper.setAttribute('role', 'region');
+      wrapper.setAttribute('aria-label', '表格，可横向滚动');
+      table.before(wrapper);
+      wrapper.append(table);
+    });
+    const progress = document.querySelector<HTMLElement>('.reading-progress span');
+    const prose = document.querySelector<HTMLElement>('.prose');
+    if (progress && prose) {
+      let queued = false;
+      const update = () => {
+        if (signal.aborted) return;
+        const rect = prose.getBoundingClientRect();
+        const total = Math.max(1, rect.height - innerHeight + 140);
+        progress.style.transform = `scaleX(${Math.min(1, Math.max(0, (140 - rect.top) / total))})`;
+        queued = false;
+      };
+      addEventListener('scroll', () => { if (!queued) { queued = true; requestAnimationFrame(update); } }, { passive: true, signal });
+      addEventListener('resize', update, { signal });
+      update();
+    }
   });
 </script>

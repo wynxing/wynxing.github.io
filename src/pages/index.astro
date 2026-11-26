@@ -1,7 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
-import PulseHome from '../components/PulseHome.astro';
+import WorkbenchHome from '../components/WorkbenchHome.astro';
 import {
   byDateDesc,
   byProjectOrder,
@@ -15,7 +15,7 @@ import {
 const allPosts = byDateDesc(await getCollection('blog', ({ data }) => !data.draft));
 const allProjects = byProjectOrder(await getCollection('projects', ({ data }) => !data.draft));
 
-const posts = allPosts.slice(0, 4).map((post) => ({
+const posts = allPosts.slice(0, 3).map((post) => ({
   title: post.data.title,
   href: entryHref(post),
   date: formatDate(post.data.date),
@@ -25,19 +25,15 @@ const posts = allPosts.slice(0, 4).map((post) => ({
   readingTime: readingTime(post.body),
 }));
 
-const projects = allProjects.slice(0, 4).map((project) => ({
+const projects = allProjects.map((project) => ({
   title: project.data.title,
   href: entryHref(project),
   description: project.data.description,
+  status: project.data.status,
   statusText: statusWithVersion(project.data.status, project.data.version),
-  role: project.data.role || '',
-  highlight: project.data.highlight || project.data.description,
-  stack: project.data.stack.join(' / '),
+  stack: project.data.stack.slice(0, 2).join(' · '),
 }));
 ---
 <BaseLayout>
-  <PulseHome
-    projects={projects}
-    posts={posts}
-  />
+  <WorkbenchHome projects={projects} posts={posts} />
 </BaseLayout>

@@ -1,11 +1,42 @@
-<label class="theme-control">
-  <span class="sr-only">外观主题</span>
-  <select aria-label="外观主题" data-theme-select>
-    <option value="system">跟随系统</option>
-    <option value="light">浅色</option>
-    <option value="dark">深色</option>
-  </select>
-</label>
+---
+interface Props {
+  showRocker?: boolean;
+  srOnlySelect?: boolean;
+}
+
+const { showRocker = false, srOnlySelect = false } = Astro.props;
+---
+<div class="theme-bundle">
+  {showRocker && (
+    <button
+      type="button"
+      class="nav-rocker"
+      data-theme-rocker
+      aria-label="切换明暗主题"
+      aria-pressed="false"
+      title="切换明暗主题"
+    >
+      <span class="nav-rocker-knob" aria-hidden="true">
+        <svg class="icon-sun" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round">
+          <circle cx="8" cy="8" r="3" />
+          <path d="M8 1.5v1.5M8 13v1.5M1.5 8H3M13 8h1.5M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M12.6 3.4l-1.1 1.1M4.5 11.5l-1.1 1.1" />
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M13 9.8A5.2 5.2 0 0 1 6.2 3a5.2 5.2 0 1 0 6.8 6.8Z" />
+        </svg>
+      </span>
+      <span class="nav-rocker-led" aria-hidden="true"></span>
+    </button>
+  )}
+  <label class:list={['theme-control', { 'sr-only': srOnlySelect }]}>
+    <span class="sr-only">外观主题</span>
+    <select aria-label="外观主题" data-theme-select>
+      <option value="system">跟随系统</option>
+      <option value="light">浅色</option>
+      <option value="dark">深色</option>
+    </select>
+  </label>
+</div>
 <script>
   let select = document.querySelector<HTMLSelectElement>('[data-theme-select]');
   const system = window.matchMedia('(prefers-color-scheme: dark)');
@@ -15,16 +46,45 @@
     document.documentElement.dataset.theme = theme;
     document.documentElement.dataset.themePreference = preference;
     if (select) select.value = preference;
+    if (typeof document.querySelectorAll === 'function') {
+      document.querySelectorAll<HTMLButtonElement>('[data-theme-rocker]').forEach((btn) => {
+        btn.setAttribute('aria-pressed', String(theme === 'dark'));
+        btn.dataset.themeState = theme;
+      });
+      document.querySelectorAll<HTMLButtonElement>('[data-theme-auto]').forEach((btn) => {
+        btn.setAttribute('aria-pressed', String(preference === 'system'));
+      });
+    }
     document.dispatchEvent(new CustomEvent('themechange', { detail: theme }));
+  };
+  const setPreference = (next: string) => {
+    preference = next;
+    try { localStorage.setItem('theme', preference); } catch {}
+    apply();
   };
   const bind = () => {
     select = document.querySelector<HTMLSelectElement>('[data-theme-select]');
     if (select && !select.dataset.bound) {
       select.dataset.bound = 'true';
       select.addEventListener('change', () => {
-        preference = select!.value;
-        try { localStorage.setItem('theme', preference); } catch {}
-        apply();
+        setPreference(select!.value);
+      });
+    }
+    if (typeof document.querySelectorAll === 'function') {
+      document.querySelectorAll<HTMLButtonElement>('[data-theme-rocker]').forEach((btn) => {
+        if (btn.dataset.bound) return;
+        btn.dataset.bound = 'true';
+        btn.addEventListener('click', () => {
+          const current = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
+          setPreference(current === 'dark' ? 'light' : 'dark');
+        });
+      });
+      document.querySelectorAll<HTMLButtonElement>('[data-theme-auto]').forEach((btn) => {
+        if (btn.dataset.bound) return;
+        btn.dataset.bound = 'true';
+        btn.addEventListener('click', () => {
+          setPreference('system');
+        });
       });
     }
     apply();

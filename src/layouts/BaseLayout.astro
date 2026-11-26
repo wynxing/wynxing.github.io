@@ -1,7 +1,8 @@
 ---
+import '@fontsource-variable/plus-jakarta-sans';
+import '@fontsource-variable/jetbrains-mono';
 import '../styles/global.css';
 import { ClientRouter } from 'astro:transitions';
-import MusicPlayer from '../components/MusicPlayer.astro';
 import { SITE_DESCRIPTION, SITE_TITLE, cloudflareAnalyticsToken, githubProfileUrl } from '../consts';
 import SiteNav from '../components/SiteNav.astro';
 
@@ -70,28 +71,27 @@ const isHome = pathname === '/' || pathname === '';
       />
     )}
   </head>
-  <body class={isHome ? 'is-home' : undefined}>
+  <body class={isHome ? 'is-home' : 'is-inner'}>
     <a href="#content" class="skip-link">跳到正文</a>
     {showProgress && (
       <div class="reading-progress" aria-hidden="true"><span></span></div>
     )}
-    <SiteNav />
-    {isHome ? (
-      <div class="music-stage">
-        <div id="home-music-slot"><MusicPlayer /></div>
-      </div>
-    ) : (
-      <div class="music-stage music-stage--inner" id="music-home">
-        <MusicPlayer />
-      </div>
-    )}
+    {!isHome && <SiteNav />}
     <main id="content" tabindex="-1">
       <slot />
     </main>
-    <footer class="site-footer container">
-      <div><a class="footer-name" href="/">Wynn’s Save Point</a><p>记录构建、学习和路上的想法。</p></div>
-      <nav aria-label="页脚导航"><a href={githubProfileUrl} target="_blank" rel="noreferrer">GitHub ↗</a><a href="/rss.xml" data-astro-reload>RSS ↗</a><a href="/admin/" data-astro-reload>写作后台</a></nav>
-      <span class="copyright">© {new Date().getFullYear()} Wynn</span>
-    </footer>
+    {!isHome && (
+      <footer class="site-footer container">
+        <div class="footer-brand">
+          <a class="footer-name" href="/">Wynn’s Save Point</a>
+        </div>
+        <nav aria-label="页脚导航">
+          <a href={githubProfileUrl} target="_blank" rel="noreferrer">GitHub ↗</a>
+          <a href="/rss.xml" data-astro-reload>RSS ↗</a>
+          <a href="/admin/" data-astro-reload>写作后台</a>
+        </nav>
+        <span class="copyright">© {new Date().getFullYear()} Wynn</span>
+      </footer>
+    )}
   </body>
 </html>

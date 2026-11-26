@@ -157,8 +157,8 @@ function render() {
     : !active
       ? "此刻歌单"
       : audio.paused
-        ? "SIGNAL READY"
-        : "ON AIR";
+        ? "待机"
+        : "播放中";
   get<HTMLButtonElement>("prev").disabled = tracks.length < 2;
   get<HTMLButtonElement>("next").disabled = tracks.length < 2;
 
@@ -288,6 +288,10 @@ function placePlayer() {
   const target = slot || document.getElementById("music-home");
   if (target && player.parentElement !== target) target.append(player);
   player.classList.toggle("is-mini", !slot);
+  if (slot) {
+    player.classList.toggle("is-expanded", false);
+    get("expand")?.setAttribute("aria-expanded", "false");
+  }
   render();
 }
 document.addEventListener("astro:page-load", placePlayer);

@@ -4,13 +4,29 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import ListGrid from '../../components/ListGrid.astro';
 import PostCard from '../../components/PostCard.astro';
 import { byProjectOrder } from '../../utils/content';
+
 const entries = byProjectOrder(await getCollection('projects', ({ data }) => !data.draft));
 const tags = [...new Set(entries.flatMap(entry => entry.data.tags))].sort();
-
 ---
 <BaseLayout title="项目" description="做过的产品、我负责的工作，以及最终交付的成果。" section="项目">
-  <section class="page">
-    <header class="page-header"><span class="eyebrow">BUILT ALONG THE WAY</span><h1>项目<span class="accent">.</span><span class="page-count">{String(entries.length).padStart(2, '0')}</span></h1><p>做过的产品、我负责的工作，以及最终交付的成果。</p></header>
-    {entries.length > 0 ? <ListGrid count={entries.length} tags={tags}  kind="projects">{entries.map(entry => <PostCard entry={entry}/>)}</ListGrid> : <div class="empty-state glass"><span class="eyebrow">TO BE CONTINUED</span><h2>这里，还在慢慢积累。</h2><p>暂时没有公开的项目。先去看看已经写下的文章。</p><a href="/blog/">浏览文章 ↗</a></div>}
+  <section class="page sheet-card">
+    <header class="page-header">
+      <div class="page-title-row">
+        <h1>项目</h1>
+        <span class="page-count">{String(entries.length).padStart(2, '0')}</span>
+      </div>
+      <p>做过的工具、参与过的系统，以及具体交付。</p>
+    </header>
+    {entries.length > 0 ? (
+      <ListGrid count={entries.length} tags={tags} kind="projects">
+        {entries.map(entry => <PostCard entry={entry} />)}
+      </ListGrid>
+    ) : (
+      <div class="empty-state">
+        <h2>暂时还没有公开的项目</h2>
+        <p>可以先去看看已经写下的文章。</p>
+        <a href="/blog/">浏览文章 ↗</a>
+      </div>
+    )}
   </section>
 </BaseLayout>

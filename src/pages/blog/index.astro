@@ -4,13 +4,30 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import ListGrid from '../../components/ListGrid.astro';
 import PostCard from '../../components/PostCard.astro';
 import { byDateDesc } from '../../utils/content';
+
 const entries = byDateDesc(await getCollection('blog', ({ data }) => !data.draft));
 const tags = [...new Set(entries.flatMap(entry => entry.data.tags))].sort();
 const categories = [...new Set(entries.map(entry => entry.data.category))];
 ---
 <BaseLayout title="文章" description="技术文章、项目复盘，还有一些慢慢想明白的事。" section="文章">
-  <section class="page">
-    <header class="page-header"><span class="eyebrow">WORDS & IDEAS</span><h1>文章<span class="accent">.</span><span class="page-count">{String(entries.length).padStart(2, '0')}</span></h1><p>技术文章、项目复盘，还有一些慢慢想明白的事。</p></header>
-    {entries.length > 0 ? <ListGrid count={entries.length} tags={tags} categories={categories} kind="blog">{entries.map(entry => <PostCard entry={entry}/>)}</ListGrid> : <div class="empty-state glass"><span class="eyebrow">TO BE CONTINUED</span><h2>这里，还在慢慢积累。</h2><p>暂时没有公开的文章。先去看看已经写下的文章。</p><a href="/blog/">浏览文章 ↗</a></div>}
+  <section class="page sheet-card">
+    <header class="page-header">
+      <div class="page-title-row">
+        <h1>文章</h1>
+        <span class="page-count">{String(entries.length).padStart(2, '0')}</span>
+      </div>
+      <p>技术笔记、复盘与随想。</p>
+    </header>
+    {entries.length > 0 ? (
+      <ListGrid count={entries.length} tags={tags} categories={categories} kind="blog">
+        {entries.map(entry => <PostCard entry={entry} />)}
+      </ListGrid>
+    ) : (
+      <div class="empty-state">
+        <h2>暂时还没有公开的文章</h2>
+        <p>可以先去看看项目记录，或者回到工作台听听歌。</p>
+        <a href="/projects/">浏览项目 ↗</a>
+      </div>
+    )}
   </section>
 </BaseLayout>

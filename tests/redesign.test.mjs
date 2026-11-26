@@ -315,16 +315,17 @@ test("tag filtering preserves commas and combines category with tag", () => {
   assert.equal(tag.value, "absent");
 });
 
-test("pulse homepage exposes four real routes, one latest article, four stations and one persistent player", () => {
+test("workbench homepage exposes four real routes, one latest article, tactile controls and one persistent player", () => {
   const html = read("dist/index.html");
   const nav = html.match(/<nav class="desktop-nav"[\s\S]*?<\/nav>/)[0];
   assert.deepEqual(
     [...nav.matchAll(/href="([^"]+)"/g)].map((m) => m[1]),
     ["/blog/", "/projects/", "/about/", "/search/"],
   );
-  assert.ok(html.includes("data-pulse-viewport"));
-  assert.ok(html.includes("data-pulse-canvas"));
-  assert.equal((html.match(/data-station-jump=/g) || []).length, 4);
+  assert.ok(html.includes("data-workbench-home"));
+  assert.ok(html.includes("data-wb-search-input"));
+  assert.ok(html.includes("data-theme-rocker"));
+  assert.ok(html.includes("data-workbench-projects"));
   assert.equal((html.match(/data-latest-entry/g) || []).length, 1);
   assert.equal((html.match(/<audio /g) || []).length, 1);
   assert.ok(html.includes('data-astro-transition-persist="save-point-music"'));
