@@ -6,6 +6,13 @@ interface PulseAudioBridge {
   getBins: () => Uint8Array | null;
 }
 
+interface Ripple {
+  x: number;
+  y: number;
+  age: number;
+  maxAge: number;
+}
+
 onPage((signal, cleanup) => {
   const viewportEl = document.querySelector<HTMLElement>("[data-pulse-viewport]");
   const stageEl = document.querySelector<HTMLElement>("[data-pulse-stage]");
@@ -34,31 +41,31 @@ onPage((signal, cleanup) => {
 
   const desktopQuery = matchMedia("(min-width: 900px)");
   const reducedMotionQuery = matchMedia("(prefers-reduced-motion: reduce)");
-  const stageWidth = 2520;
+  const stageWidth = 2200;
+  const MID_RATIO = 0.48;
   const stationPositions = stationEls.map((el) =>
     Number(el.dataset.stationX || 0),
   );
-  const stationDirs = stationEls.map((el) =>
-    el.classList.contains("is-above") ? -1 : 1,
-  );
-  const hasAbove = stationEls.map(
-    (el, idx) =>
-      el.classList.contains("is-above") ||
-      mirrorEls.some(
+  const aboveEls = stationEls.map((el, idx) => {
+    if (el.classList.contains("is-above")) return el;
+    return (
+      mirrorEls.find(
         (m) =>
           Number(m.dataset.pulseMirror) === idx &&
           m.classList.contains("is-above"),
-      ),
-  );
-  const hasBelow = stationEls.map(
-    (el, idx) =>
-      el.classList.contains("is-below") ||
-      mirrorEls.some(
+      ) ?? null
+    );
+  });
+  const belowEls = stationEls.map((el, idx) => {
+    if (el.classList.contains("is-below")) return el;
+    return (
+      mirrorEls.find(
         (m) =>
           Number(m.dataset.pulseMirror) === idx &&
           m.classList.contains("is-below"),
-      ),
-  );
+      ) ?? null
+    );
+  });
 
   // Inertial horizontal scroll state
   let currentX = 0;
@@ -66,30 +73,185 @@ onPage((signal, cleanup) => {
   let scrollVelocity = 0;
   let pinnedStation: number | null = null;
   let hoveredStation: number | null = null;
-  const stationBoost = stationEls.map(() => 0);
 
-  // 1D spring-damper string physics across viewport width
-  const STRING_N = 160;
+  // Clinical ECG monitor ring buffer (desktop horizontal & mobile vertical)
+  const COL_STEP = 1.5;
+  let cols = 0;
+  let trace = new Float32Array(0);
+  let sweepCol = 0;
+  let beatPhase = 0.38;
+  let smoothedBpm = 64;
+  let extraPulseBoost = 0;
+  let tapBpmBoost = 0;
+  let beatGlow = 0;
+  let lastLayoutWidth = 0;
+
+  // Taut 1D spring-damper string physics layered onto desktop baseline
+  const STRING_N = 180;
   const disp = new Float32Array(STRING_N);
   const vel = new Float32Array(STRING_N);
+  const ripples: Ripple[] = [];
 
   // Pointer telemetry
   let pointerActive = false;
+  let pointerAlpha = 0;
   let pointerX = 0;
   let pointerY = 0;
   let prevPointerY = 0;
+
+  // Offscreen ECG chart-paper pattern & spotlight reveal buffer
+  const TILE_SIZE = 60;
+  const SPOT_SIZE = 460;
+  const SPOT_HALF = SPOT_SIZE / 2;
+  let lightPattern: CanvasPattern | null = null;
+  let darkPattern: CanvasPattern | null = null;
+  let spotCanvas: HTMLCanvasElement | null = null;
+  let spotCtx: CanvasRenderingContext2D | null = null;
+  let spotDpr = 0;
+
+  // Mobile vertical ECG state
+  let mRows = 0;
+  let mTrace = new Float32Array(0);
+  let mSweepRow = 0;
+  let mBeatPhase = 0.38;
+  let lastLayoutHeight = 0;
+  let mobileScrollSpeed = 0;
+  let lastWindowScrollY = typeof window !== "undefined" ? window.scrollY : 0;
+
   let width = 0;
   let height = 0;
   let dpr = 1;
   let rafId = 0;
   let lastTime = 0;
-  let sweepPhase = 0;
-  let beatClock = 0;
   let lastBpmText = "";
-  let mobileScrollSpeed = 0;
-  let lastWindowScrollY = typeof window !== "undefined" ? window.scrollY : 0;
 
   const getMaxScroll = () => Math.max(0, stageWidth - viewport.clientWidth);
+
+  const getPaperPattern = (isDark: boolean): CanvasPattern | null => {
+    if (isDark && darkPattern) return darkPattern;
+    if (!isDark && lightPattern) return lightPattern;
+    const tile = document.createElement("canvas");
+    tile.width = TILE_SIZE;
+    tile.height = TILE_SIZE;
+    const tctx = tile.getContext("2d");
+    if (!tctx) return null;
+
+    const minor = isDark ? "rgba(255,255,255,0.08)" : "rgba(180,72,32,0.10)";
+    const major = isDark ? "rgba(255,120,60,0.17)" : "rgba(180,72,32,0.20)";
+    const dot = isDark ? "rgba(255,77,0,0.35)" : "rgba(230,62,0,0.30)";
+
+    tctx.lineWidth = 1;
+    tctx.strokeStyle = minor;
+    tctx.beginPath();
+    for (let pos = 12; pos < TILE_SIZE; pos += 12) {
+      tctx.moveTo(pos + 0.5, 0);
+      tctx.lineTo(pos + 0.5, TILE_SIZE);
+      tctx.moveTo(0, pos + 0.5);
+      tctx.lineTo(TILE_SIZE, pos + 0.5);
+    }
+    tctx.stroke();
+
+    tctx.strokeStyle = major;
+    tctx.beginPath();
+    tctx.moveTo(0.5, 0);
+    tctx.lineTo(0.5, TILE_SIZE);
+    tctx.moveTo(0, 0.5);
+    tctx.lineTo(TILE_SIZE, 0.5);
+    tctx.stroke();
+
+    tctx.fillStyle = dot;
+    tctx.beginPath();
+    tctx.arc(0.5, 0.5, 1.1, 0, Math.PI * 2);
+    tctx.fill();
+
+    const pat = ctx.createPattern(tile, "repeat");
+    if (isDark) darkPattern = pat;
+    else lightPattern = pat;
+    return pat;
+  };
+
+  const ensureSpotCanvas = (): CanvasRenderingContext2D | null => {
+    if (!spotCanvas) {
+      spotCanvas = document.createElement("canvas");
+      spotCtx = spotCanvas.getContext("2d");
+    }
+    if (!spotCanvas || !spotCtx) return null;
+    if (spotDpr !== dpr) {
+      spotDpr = dpr;
+      spotCanvas.width = Math.round(SPOT_SIZE * dpr);
+      spotCanvas.height = Math.round(SPOT_SIZE * dpr);
+    }
+    return spotCtx;
+  };
+
+  const drawPaperReveal = (
+    cx: number,
+    cy: number,
+    radius: number,
+    strength: number,
+    offsetX: number,
+    offsetY: number,
+    pattern: CanvasPattern | null,
+  ) => {
+    if (!pattern || strength <= 0.01 || radius <= 4) return;
+    const sc = ensureSpotCanvas();
+    if (!sc || !spotCanvas) return;
+
+    const r = Math.min(SPOT_HALF, radius);
+    sc.setTransform(dpr, 0, 0, dpr, 0, 0);
+    sc.globalCompositeOperation = "source-over";
+    sc.clearRect(0, 0, SPOT_SIZE, SPOT_SIZE);
+
+    sc.save();
+    sc.translate(SPOT_HALF - cx - offsetX, SPOT_HALF - cy - offsetY);
+    sc.fillStyle = pattern;
+    sc.fillRect(
+      cx + offsetX - SPOT_HALF,
+      cy + offsetY - SPOT_HALF,
+      SPOT_SIZE,
+      SPOT_SIZE,
+    );
+    sc.restore();
+
+    sc.globalCompositeOperation = "destination-in";
+    const grad = sc.createRadialGradient(
+      SPOT_HALF,
+      SPOT_HALF,
+      0,
+      SPOT_HALF,
+      SPOT_HALF,
+      r,
+    );
+    grad.addColorStop(0, `rgba(0,0,0,${strength.toFixed(3)})`);
+    grad.addColorStop(0.45, `rgba(0,0,0,${(strength * 0.55).toFixed(3)})`);
+    grad.addColorStop(1, "rgba(0,0,0,0)");
+    sc.fillStyle = grad;
+    sc.fillRect(0, 0, SPOT_SIZE, SPOT_SIZE);
+    sc.globalCompositeOperation = "source-over";
+
+    ctx.drawImage(
+      spotCanvas,
+      cx - SPOT_HALF,
+      cy - SPOT_HALF,
+      SPOT_SIZE,
+      SPOT_SIZE,
+    );
+  };
+
+  const drawRadialPool = (
+    x: number,
+    y: number,
+    radius: number,
+    innerColor: string,
+    midColor: string,
+  ) => {
+    const grad = ctx.createRadialGradient(x, y, 0, x, y, radius);
+    grad.addColorStop(0, innerColor);
+    grad.addColorStop(0.5, midColor);
+    grad.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, width, height);
+  };
 
   const injectImpulseAtScreenX = (screenX: number, strength: number) => {
     if (!desktopQuery.matches || reducedMotionQuery.matches || width <= 0) return;
@@ -97,9 +259,130 @@ onPage((signal, cleanup) => {
     const centerIdx = normX * (STRING_N - 1);
     for (let i = 0; i < STRING_N; i++) {
       const d = Math.abs(i - centerIdx);
-      if (d < 9) {
-        vel[i] += strength * Math.exp(-(d * d) / 11);
+      if (d < 8) {
+        vel[i] += strength * Math.exp(-(d * d) / 10);
       }
+    }
+  };
+
+  const sampleStringDisp = (screenX: number): number => {
+    if (width <= 0) return 0;
+    const idxFloat =
+      (Math.max(0, Math.min(width, screenX)) / width) * (STRING_N - 1);
+    const i0 = Math.max(0, Math.min(STRING_N - 2, Math.floor(idxFloat)));
+    const frac = idxFloat - i0;
+    return disp[i0] * (1 - frac) + disp[i0 + 1] * frac;
+  };
+
+  const spawnRipple = (x: number, y: number, maxAge = 0.55) => {
+    if (!desktopQuery.matches || reducedMotionQuery.matches) return;
+    ripples.push({ x, y, age: 0, maxAge });
+    if (ripples.length > 8) ripples.shift();
+  };
+
+  /**
+   * Authentic clinical P-QRS-T waveform kernel.
+   * Returns upward displacement in px (draw at midY - value).
+   */
+  const ecgValue = (phase: number, amp: number): number => {
+    const p = ((phase % 1) + 1) % 1;
+    if (p < 0.08) return 0;
+    if (p < 0.17) {
+      const t = (p - 0.08) / 0.09;
+      return amp * 0.12 * Math.pow(Math.sin(t * Math.PI), 1.6);
+    }
+    if (p < 0.215) return 0;
+    if (p < 0.236) {
+      return p < 0.228
+        ? -amp * 0.16 * ((p - 0.215) / 0.013)
+        : -amp * 0.16 * ((0.236 - p) / 0.008);
+    }
+    if (p < 0.268) {
+      return p < 0.251
+        ? amp * Math.pow((p - 0.236) / 0.015, 1.25)
+        : amp * Math.pow((0.268 - p) / 0.017, 1.25);
+    }
+    if (p < 0.296) {
+      return p < 0.28
+        ? -amp * 0.3 * ((p - 0.268) / 0.012)
+        : -amp * 0.3 * ((0.296 - p) / 0.016);
+    }
+    if (p < 0.365) return 0;
+    if (p < 0.52) {
+      const t = (p - 0.365) / 0.155;
+      return amp * 0.24 * Math.pow(Math.sin(Math.pow(t, 1.32) * Math.PI), 1.35);
+    }
+    return 0;
+  };
+
+  /**
+   * Sub-sample across [p0, p1] so narrow QRS spikes never get attenuated by step width.
+   */
+  const sampleEcgPeak = (p0: number, p1: number, amp: number): number => {
+    if (p1 === p0) return ecgValue(p0, amp);
+    let best = 0;
+    let bestAbs = -1;
+    const samples = 5;
+    for (let k = 0; k < samples; k++) {
+      const p = p0 + ((p1 - p0) * (k + 0.5)) / samples;
+      const v = ecgValue(p, amp);
+      const av = Math.abs(v);
+      if (av > bestAbs) {
+        bestAbs = av;
+        best = v;
+      }
+    }
+    return best;
+  };
+
+  const getMaxSafeAmp = () => (window.innerHeight <= 780 ? 28 : 36);
+
+  const prefillDesktopTrace = () => {
+    cols = Math.max(2, Math.ceil(width / COL_STEP) + 1);
+    trace = new Float32Array(cols);
+    const headCol = Math.floor(cols * 0.62);
+    sweepCol = headCol;
+    const baseSpeedPx = 170;
+    const dtPerCol = COL_STEP / baseSpeedPx;
+    const dPhase = (64 / 60) * dtPerCol;
+    const amp = Math.min(getMaxSafeAmp(), 24);
+    const headPhase = 0.38;
+
+    for (let age = 0; age < cols; age++) {
+      const col = (((headCol - age) % cols) + cols) % cols;
+      const p1 = headPhase - age * dPhase;
+      const p0 = p1 - dPhase;
+      trace[col] = sampleEcgPeak(p0, p1, amp);
+    }
+    beatPhase = headPhase;
+  };
+
+  const prefillMobileTrace = () => {
+    const stepPx = 2;
+    mRows = Math.max(2, Math.ceil(height / stepPx) + 1);
+    mTrace = new Float32Array(mRows);
+    const headRow = Math.floor(mRows * 0.45);
+    mSweepRow = headRow;
+    const baseSpeedPx = 140;
+    const dtPerRow = stepPx / baseSpeedPx;
+    const dPhase = (64 / 60) * dtPerRow;
+    const amp = 15;
+    const headPhase = 0.38;
+
+    for (let age = 0; age < mRows; age++) {
+      const row = (((headRow - age) % mRows) + mRows) % mRows;
+      const p1 = headPhase - age * dPhase;
+      const p0 = p1 - dPhase;
+      mTrace[row] = sampleEcgPeak(p0, p1, amp);
+    }
+    mBeatPhase = headPhase;
+  };
+
+  const triggerBeat = (boost = 0.65) => {
+    if (!desktopQuery.matches || reducedMotionQuery.matches) return;
+    extraPulseBoost = Math.max(extraPulseBoost, boost);
+    if (beatPhase > 0.52 || beatPhase < 0.06) {
+      beatPhase = 0.212;
     }
   };
 
@@ -150,7 +433,7 @@ onPage((signal, cleanup) => {
       currentX = targetX;
       stage.style.transform = `translate3d(${-currentX.toFixed(2)}px, 0, 0)`;
       syncRailUI();
-      drawFrame(0, 0);
+      drawFrame(0);
     }
   };
 
@@ -214,27 +497,28 @@ onPage((signal, cleanup) => {
     );
   });
 
-  // Cross-line mirror sync: 02 WORKS -> Above Project Inspect Mirror
+  // Cross-line mirror sync: 项目 -> Above Project Mirror
   const projectMirror = document.querySelector<HTMLElement>("[data-project-mirror]");
   const projectRows = [
     ...document.querySelectorAll<HTMLElement>("[data-project-item]"),
   ];
   if (projectMirror && projectRows.length > 0) {
-    const pmIndex = projectMirror.querySelector("[data-pm-index]");
     const pmStack = projectMirror.querySelector("[data-pm-stack]");
     const pmTitle = projectMirror.querySelector("[data-pm-title]");
     const pmRole = projectMirror.querySelector("[data-pm-role]");
     const pmHighlight = projectMirror.querySelector("[data-pm-highlight]");
 
-    const activateProject = (row: HTMLElement, ripple: boolean) => {
+    const activateProject = (row: HTMLElement, pulse: boolean) => {
       projectRows.forEach((item) => item.classList.toggle("is-active", item === row));
-      if (pmIndex) pmIndex.textContent = row.dataset.idx || "";
       if (pmStack) pmStack.textContent = row.dataset.stack || "";
       if (pmTitle) pmTitle.textContent = row.dataset.title || "";
       if (pmRole) pmRole.textContent = row.dataset.role || "";
       if (pmHighlight) pmHighlight.textContent = row.dataset.highlight || "";
-      if (ripple) {
-        injectImpulseAtScreenX((stationPositions[1] ?? 820) - currentX, -11);
+      if (pulse) {
+        const sx = (stationPositions[1] ?? 840) - currentX;
+        injectImpulseAtScreenX(sx, -7);
+        spawnRipple(sx, height * MID_RATIO, 0.48);
+        triggerBeat(0.55);
       }
     };
 
@@ -248,7 +532,7 @@ onPage((signal, cleanup) => {
     });
   }
 
-  // Cross-line mirror sync: 03 WRITING -> Below Excerpt Mirror
+  // Cross-line mirror sync: 文章 -> Below Excerpt Mirror
   const postMirror = document.querySelector<HTMLElement>("[data-post-mirror]");
   const postRows = [
     ...document.querySelectorAll<HTMLElement>("[data-post-item]"),
@@ -258,13 +542,16 @@ onPage((signal, cleanup) => {
     const wmTitle = postMirror.querySelector("[data-wm-title]");
     const wmDesc = postMirror.querySelector("[data-wm-desc]");
 
-    const activatePost = (row: HTMLElement, ripple: boolean) => {
+    const activatePost = (row: HTMLElement, pulse: boolean) => {
       postRows.forEach((item) => item.classList.toggle("is-active", item === row));
       if (wmMeta) wmMeta.textContent = row.dataset.meta || "";
       if (wmTitle) wmTitle.textContent = row.dataset.title || "";
       if (wmDesc) wmDesc.textContent = row.dataset.desc || "";
-      if (ripple) {
-        injectImpulseAtScreenX((stationPositions[2] ?? 1380) - currentX, 11);
+      if (pulse) {
+        const sx = (stationPositions[2] ?? 1420) - currentX;
+        injectImpulseAtScreenX(sx, 7);
+        spawnRipple(sx, height * MID_RATIO, 0.48);
+        triggerBeat(0.55);
       }
     };
 
@@ -296,7 +583,7 @@ onPage((signal, cleanup) => {
     { passive: false, signal },
   );
 
-  // Drag-to-pan with throw momentum
+  // Drag-to-pan + physical cursor plucking
   let dragging = false;
   let pointerId = -1;
   let dragStartX = 0;
@@ -327,19 +614,24 @@ onPage((signal, cleanup) => {
     "pointermove",
     (event) => {
       const rect = viewport.getBoundingClientRect();
+      const nextY = event.clientY - rect.top;
+      prevPointerY = pointerActive ? pointerY : nextY;
       pointerActive = true;
-      prevPointerY = pointerY || event.clientY - rect.top;
       pointerX = event.clientX - rect.left;
-      pointerY = event.clientY - rect.top;
+      pointerY = nextY;
 
-      // Pluck the string physically if cursor moves near midline
-      if (desktopQuery.matches && !reducedMotionQuery.matches && width > 0) {
-        const midY = height * 0.5;
-        const distY = Math.abs(pointerY - midY);
+      // Pluck the wire cleanly when cursor crosses near baseline
+      if (
+        desktopQuery.matches &&
+        !reducedMotionQuery.matches &&
+        width > 0 &&
+        !dragging
+      ) {
+        const midY = height * MID_RATIO;
         const dy = pointerY - prevPointerY;
-        if (distY < 56 && Math.abs(dy) > 0.6) {
-          const impulse = Math.max(-16, Math.min(16, dy * 0.85));
-          injectImpulseAtScreenX(pointerX, impulse * 0.45);
+        if (Math.abs(pointerY - midY) < 58 && Math.abs(dy) > 0.5) {
+          const clampedDy = Math.max(-14, Math.min(14, dy * 0.75));
+          injectImpulseAtScreenX(pointerX, clampedDy * 0.45);
         }
       }
 
@@ -386,18 +678,23 @@ onPage((signal, cleanup) => {
     { signal },
   );
 
-  // Tactile click pluck near baseline
+  // Click near baseline: pluck wire + ripple ring + accelerate heartbeat
   viewport.addEventListener(
     "click",
     (event) => {
-      if (!desktopQuery.matches || reducedMotionQuery.matches) return;
+      if (dragMoved || !desktopQuery.matches || reducedMotionQuery.matches) return;
       const target = event.target as HTMLElement | null;
       if (target?.closest("a, button, input, select, label")) return;
       const rect = viewport.getBoundingClientRect();
       const clickX = event.clientX - rect.left;
       const clickY = event.clientY - rect.top;
-      if (Math.abs(clickY - height * 0.5) < 90 && width > 0) {
-        injectImpulseAtScreenX(clickX, -18);
+      if (Math.abs(clickY - height * MID_RATIO) < 90 && width > 0) {
+        const col = Math.max(0, Math.min(cols - 1, Math.round(clickX / COL_STEP)));
+        const anchorY = height * MID_RATIO - (trace[col] || 0) + sampleStringDisp(clickX);
+        injectImpulseAtScreenX(clickX, -15);
+        spawnRipple(clickX, anchorY, 0.55);
+        tapBpmBoost = Math.min(68, tapBpmBoost + 12);
+        triggerBeat(0.8);
       }
     },
     { signal },
@@ -455,29 +752,33 @@ onPage((signal, cleanup) => {
       stage.style.transform = "";
       currentX = 0;
       targetX = 0;
+      if (
+        mRows === 0 ||
+        Math.abs(height - lastLayoutHeight) > 24 ||
+        reducedMotionQuery.matches
+      ) {
+        prefillMobileTrace();
+        lastLayoutHeight = height;
+      }
     } else {
       const maxScroll = getMaxScroll();
       targetX = Math.max(0, Math.min(maxScroll, targetX));
       currentX = Math.max(0, Math.min(maxScroll, currentX));
       stage.style.transform = `translate3d(${-currentX.toFixed(2)}px, 0, 0)`;
+      if (
+        cols === 0 ||
+        Math.abs(width - lastLayoutWidth) > 24 ||
+        reducedMotionQuery.matches
+      ) {
+        prefillDesktopTrace();
+        lastLayoutWidth = width;
+      }
     }
     syncRailUI();
-    drawFrame(typeof performance !== "undefined" ? performance.now() : 0, 0);
+    drawFrame(0);
   };
 
-  // Sharp ECG kernel centered around normalized dx (in world px)
-  const ecgSample = (dx: number, dir: number, amp: number) => {
-    const adx = Math.abs(dx);
-    if (adx > 96) return 0;
-    const p = Math.exp(-((dx + 48) * (dx + 48)) / 90) * 5;
-    const q = -Math.exp(-((dx + 14) * (dx + 14)) / 24) * 7;
-    const r = Math.exp(-(dx * dx) / 36) * amp;
-    const s = -Math.exp(-((dx - 13) * (dx - 13)) / 26) * 11;
-    const t = Math.exp(-((dx - 48) * (dx - 48)) / 140) * 8;
-    return dir * (p + q + r + s + t);
-  };
-
-  function drawFrame(now: number, dtSec: number) {
+  function drawFrame(dtSec: number) {
     if (signal.aborted || width <= 0 || height <= 0) return;
 
     const styles = getComputedStyle(document.documentElement);
@@ -497,63 +798,158 @@ onPage((signal, cleanup) => {
     ).__pulseAudio;
     const audioPlaying = Boolean(bridge?.isPlaying());
     const audioLevel = audioPlaying ? bridge?.getLevel() || 0 : 0;
-    const audioBins = audioPlaying ? bridge?.getBins() || null : null;
+
+    if (dtSec > 0) {
+      beatGlow *= Math.exp(-dtSec * 3.2);
+      pointerAlpha +=
+        ((pointerActive ? 1 : 0) - pointerAlpha) * Math.min(1, dtSec * 7);
+    }
 
     ctx.clearRect(0, 0, width, height);
 
     if (!desktopQuery.matches) {
-      // Mobile: live vertical heartbeat trace along left spine (x = 20)
-      const spineX = 20;
-      const steps = Math.max(80, Math.floor(height / 4));
+      // Mobile: live vertical clinical ECG sweep along left spine (x = 18)
+      const spineX = 18;
+      const stepPx = 2;
+      if (mRows === 0) prefillMobileTrace();
+
       mobileScrollSpeed *= 0.9;
-      const energy = audioLevel * 14 + mobileScrollSpeed * 0.45;
-      beatClock += dtSec * (1.06 + energy * 0.04);
+      if (!reducedMotionQuery.matches && dtSec > 0) {
+        const bpm = 64 + Math.min(36, mobileScrollSpeed * 1.4) + audioLevel * 20;
+        const amp = Math.min(
+          20,
+          15 + audioLevel * 5 + Math.min(4, mobileScrollSpeed * 0.15),
+        );
+        const sweepSpeedY = 140;
+        const rowAdvance = (sweepSpeedY * dtSec) / stepPx;
+        const prevFloor = Math.floor(mSweepRow);
+        const nextSweep = mSweepRow + rowAdvance;
+        const steps = Math.min(mRows, Math.floor(nextSweep) - prevFloor);
+        const dtPerRow = stepPx / sweepSpeedY;
+        const dPhase = (bpm / 60) * dtPerRow;
 
-      // Vertical tick ruler
-      ctx.strokeStyle = isDark ? "rgba(255,255,255,0.08)" : "rgba(10,10,10,0.08)";
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      for (let y = 0; y <= height; y += 24) {
-        const len = y % 120 === 0 ? 7 : 3;
-        ctx.moveTo(spineX - len, y);
-        ctx.lineTo(spineX, y);
-      }
-      ctx.stroke();
-
-      ctx.beginPath();
-      for (let i = 0; i <= steps; i++) {
-        const y = (i / steps) * height;
-        let xOff = 0;
-        if (!reducedMotionQuery.matches) {
-          const cycle = ((y / 170 - beatClock * 0.7) % 1 + 1) % 1;
-          if (cycle > 0.35 && cycle < 0.65) {
-            const local = (cycle - 0.5) * 260;
-            xOff += ecgSample(local, 1, 13 + energy * 0.6);
+        for (let s = 1; s <= steps; s++) {
+          const row = (prevFloor + s) % mRows;
+          const nextPhase = mBeatPhase + dPhase;
+          const prevMod = ((mBeatPhase % 1) + 1) % 1;
+          const nextMod = ((nextPhase % 1) + 1) % 1;
+          if ((prevMod < 0.251 && nextMod >= 0.251) || nextPhase - mBeatPhase >= 1) {
+            beatGlow = Math.min(1, beatGlow + 0.68);
           }
-          if (audioPlaying) {
-            xOff += Math.sin(y * 0.06 + now * 0.008) * (2.5 + audioLevel * 8);
-          }
+          mTrace[row] = sampleEcgPeak(mBeatPhase, nextPhase, amp);
+          mBeatPhase = nextPhase % 1;
         }
-        const px = spineX + xOff;
-        if (i === 0) ctx.moveTo(px, y);
-        else ctx.lineTo(px, y);
+        mSweepRow = nextSweep % mRows;
       }
-      ctx.strokeStyle = audioPlaying ? activeColor : lineColor;
-      ctx.lineWidth = 1.35;
-      ctx.stroke();
+
+      const headRow = Math.floor(mSweepRow) % mRows;
+      const headY = Math.min(height, headRow * stepPx);
+      const headX = spineX + mTrace[headRow];
 
       if (!reducedMotionQuery.matches) {
-        const dotY = ((beatClock * 110) % height + height) % height;
-        ctx.beginPath();
-        ctx.arc(spineX, dotY, 3, 0, Math.PI * 2);
-        ctx.fillStyle = accentColor;
-        ctx.fill();
+        const haloAlpha = isDark
+          ? 0.08 + beatGlow * 0.07 + audioLevel * 0.04
+          : 0.045 + beatGlow * 0.045 + audioLevel * 0.03;
+        drawRadialPool(
+          headX,
+          headY,
+          120 + beatGlow * 28,
+          isDark
+            ? `rgba(255,77,0,${haloAlpha.toFixed(3)})`
+            : `rgba(230,62,0,${haloAlpha.toFixed(3)})`,
+          isDark ? "rgba(255,95,25,0.02)" : "rgba(230,130,75,0.015)",
+        );
+        drawPaperReveal(
+          headX,
+          headY,
+          95,
+          0.55,
+          0,
+          0,
+          getPaperPattern(isDark),
+        );
       }
+
+      ctx.strokeStyle = isDark
+        ? "rgba(255,255,255,0.08)"
+        : "rgba(10,10,10,0.08)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(spineX, 0);
+      ctx.lineTo(spineX, height);
+      ctx.stroke();
+
+      ctx.lineJoin = "round";
+      ctx.lineCap = "round";
+
+      if (reducedMotionQuery.matches) {
+        ctx.beginPath();
+        for (let r = 0; r < mRows; r++) {
+          const py = Math.min(height, r * stepPx);
+          const px = spineX + mTrace[r];
+          if (r === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.strokeStyle = lineColor;
+        ctx.lineWidth = 1.35;
+        ctx.stroke();
+        return;
+      }
+
+      const eraseRows = Math.min(mRows - 4, Math.round(36 / stepPx));
+      const visibleRows = mRows - eraseRows;
+      const accentRows = Math.min(visibleRows, Math.round(58 / stepPx));
+      const bands = 18;
+
+      for (let b = bands - 1; b >= 0; b--) {
+        const ageStart = Math.min(
+          visibleRows - 1,
+          Math.round(((b + 1) / bands) * (visibleRows - 1)),
+        );
+        const ageEnd = Math.round((b / bands) * (visibleRows - 1));
+        if (ageStart <= ageEnd) continue;
+
+        const ageMid = (ageStart + ageEnd) * 0.5;
+        const inAccent = ageMid < accentRows;
+
+        ctx.beginPath();
+        for (let age = ageStart; age >= ageEnd; age--) {
+          const row = (((headRow - age) % mRows) + mRows) % mRows;
+          const py = Math.min(height, row * stepPx);
+          const px = spineX + mTrace[row];
+          if (age === ageStart || row === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+
+        if (inAccent) {
+          ctx.strokeStyle = accentColor;
+          ctx.globalAlpha = 0.98 - (ageMid / Math.max(1, accentRows)) * 0.22;
+          ctx.lineWidth = 1.65;
+        } else {
+          ctx.strokeStyle = audioPlaying ? activeColor : lineColor;
+          const tailNorm =
+            (ageMid - accentRows) / Math.max(1, visibleRows - accentRows);
+          ctx.globalAlpha = 0.9 - tailNorm * 0.72;
+          ctx.lineWidth = 1.35;
+        }
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+
+      ctx.save();
+      ctx.shadowColor = accentColor;
+      ctx.shadowBlur = isDark ? 8 : 5;
+      ctx.beginPath();
+      ctx.arc(headX, headY, 2.8, 0, Math.PI * 2);
+      ctx.fillStyle = accentColor;
+      ctx.fill();
+      ctx.restore();
       return;
     }
 
-    // Desktop Horizontal Physics Wave
-    const midY = height * 0.5;
+    // Desktop Horizontal Clinical ECG Monitor + Tactile Wire Physics
+    if (cols === 0) prefillDesktopTrace();
+    const midY = height * MID_RATIO;
     const maxScroll = getMaxScroll();
 
     if (!reducedMotionQuery.matches) {
@@ -564,11 +960,6 @@ onPage((signal, cleanup) => {
       currentX = Math.max(0, Math.min(maxScroll, currentX));
       scrollVelocity = (currentX - prevX) / Math.max(0.001, dtSec);
       stage.style.transform = `translate3d(${-currentX.toFixed(2)}px, 0, 0)`;
-
-      stationEls.forEach((_el, idx) => {
-        const targetBoost = hoveredStation === idx ? 1 : 0;
-        stationBoost[idx] += (targetBoost - stationBoost[idx]) * Math.min(1, dtSec * 10);
-      });
     } else {
       currentX = targetX;
       scrollVelocity = 0;
@@ -578,228 +969,203 @@ onPage((signal, cleanup) => {
     syncRailUI();
 
     const speedNorm = Math.min(1, Math.abs(scrollVelocity) / 1400);
-    const liveBpm = Math.round(64 + speedNorm * 58 + audioLevel * 28);
+    if (!reducedMotionQuery.matches && dtSec > 0) {
+      tapBpmBoost = Math.max(0, tapBpmBoost - dtSec * 14);
+      const targetBpm = Math.min(
+        142,
+        64 + speedNorm * 44 + audioLevel * 22 + tapBpmBoost,
+      );
+      smoothedBpm += (targetBpm - smoothedBpm) * Math.min(1, dtSec * 4.5);
+      extraPulseBoost = Math.max(0, extraPulseBoost - dtSec * 1.4);
+
+      const amp = Math.min(
+        getMaxSafeAmp(),
+        24 + speedNorm * 6 + audioLevel * 10 + extraPulseBoost * 5,
+      );
+      const sweepSpeedPx = 170 + speedNorm * 55;
+      const colAdvance = (sweepSpeedPx * dtSec) / COL_STEP;
+      const prevFloor = Math.floor(sweepCol);
+      const nextSweep = sweepCol + colAdvance;
+      const steps = Math.min(cols, Math.floor(nextSweep) - prevFloor);
+      const dtPerCol = COL_STEP / sweepSpeedPx;
+      const dPhase = (smoothedBpm / 60) * dtPerCol;
+
+      for (let s = 1; s <= steps; s++) {
+        const col = (prevFloor + s) % cols;
+        const nextPhase = beatPhase + dPhase;
+        const prevMod = ((beatPhase % 1) + 1) % 1;
+        const nextMod = ((nextPhase % 1) + 1) % 1;
+        if ((prevMod < 0.251 && nextMod >= 0.251) || nextPhase - beatPhase >= 1) {
+          beatGlow = Math.min(1, beatGlow + 0.72 + extraPulseBoost * 0.22);
+        }
+        trace[col] = sampleEcgPeak(beatPhase, nextPhase, amp);
+        beatPhase = nextPhase % 1;
+      }
+      sweepCol = nextSweep % cols;
+
+      // Step taut 1D spring-damper string physics + subtle magnetic cursor pull
+      const stepScale = Math.min(1.6, dtSec * 60);
+      if (pointerActive && Math.abs(pointerY - midY) < 64 && width > 0) {
+        const normX = Math.max(0, Math.min(1, pointerX / width));
+        const centerIdx = normX * (STRING_N - 1);
+        const pullTarget = Math.max(-18, Math.min(18, (pointerY - midY) * 0.22));
+        for (let i = 0; i < STRING_N; i++) {
+          const d = Math.abs(i - centerIdx);
+          if (d < 6) {
+            const w = Math.exp(-(d * d) / 8);
+            vel[i] += (pullTarget - disp[i]) * 0.08 * w * stepScale;
+          }
+        }
+      }
+      const k = 0.085;
+      const damp = 0.085;
+      for (let i = 0; i < STRING_N; i++) {
+        const force = -k * disp[i] - damp * vel[i];
+        vel[i] += force * stepScale;
+        disp[i] = Math.max(-28, Math.min(28, disp[i] + vel[i] * stepScale));
+      }
+      for (let pass = 0; pass < 2; pass++) {
+        for (let i = 1; i < STRING_N - 1; i++) {
+          const avg = (disp[i - 1] + disp[i + 1]) * 0.5;
+          vel[i] += (avg - disp[i]) * 0.18 * stepScale;
+        }
+      }
+
+      // Advance click/detent ripple rings
+      for (let i = ripples.length - 1; i >= 0; i--) {
+        ripples[i].age += dtSec;
+        if (ripples[i].age >= ripples[i].maxAge) {
+          ripples.splice(i, 1);
+        }
+      }
+    }
+
     if (bpmEl) {
-      const text = `${liveBpm} BPM`;
+      const text = `${Math.round(smoothedBpm)} BPM`;
       if (text !== lastBpmText) {
         bpmEl.textContent = text;
         lastBpmText = text;
       }
     }
 
-    // Step 1D spring-damper string physics
+    const headCol = Math.floor(sweepCol) % cols;
+    const headX = Math.min(width, headCol * COL_STEP);
+    const headY =
+      midY -
+      trace[headCol] +
+      (reducedMotionQuery.matches ? 0 : sampleStringDisp(headX));
+
+    // LAYER 0a: Cardiac Ambient Light Field (slow-parallax gallery wash + R-peak breath)
+    const bgParallaxX = currentX * 0.16;
+    const span = Math.max(width, height);
+    drawRadialPool(
+      width * 0.26 - bgParallaxX * 0.55,
+      height * 0.24,
+      span * 0.62,
+      isDark ? "rgba(255,115,45,0.055)" : "rgba(218,186,152,0.20)",
+      isDark ? "rgba(255,115,45,0.015)" : "rgba(218,186,152,0.06)",
+    );
+    drawRadialPool(
+      width * 0.78 - bgParallaxX * 0.45,
+      height * 0.78,
+      span * 0.58,
+      isDark ? "rgba(90,138,190,0.065)" : "rgba(148,172,192,0.16)",
+      isDark ? "rgba(90,138,190,0.018)" : "rgba(148,172,192,0.04)",
+    );
+    const haloInnerAlpha = isDark
+      ? 0.085 + beatGlow * 0.06 + audioLevel * 0.045
+      : 0.048 + beatGlow * 0.042 + audioLevel * 0.03;
+    drawRadialPool(
+      reducedMotionQuery.matches ? width * 0.5 : headX,
+      midY,
+      span * (0.36 + beatGlow * 0.08 + audioLevel * 0.05),
+      isDark
+        ? `rgba(255,77,0,${haloInnerAlpha.toFixed(3)})`
+        : `rgba(230,62,0,${haloInnerAlpha.toFixed(3)})`,
+      isDark ? "rgba(255,95,25,0.025)" : "rgba(230,130,75,0.02)",
+    );
+
+    // LAYER 0b: Local-Reveal Embossed ECG Chart Paper (scan head, cursor, click ripples)
     if (!reducedMotionQuery.matches) {
-      const k = 0.06;
-      const damp = 0.095;
-      for (let i = 0; i < STRING_N; i++) {
-        const force = -k * disp[i] - damp * vel[i];
-        vel[i] += force;
-        disp[i] += vel[i];
+      const pattern = getPaperPattern(isDark);
+      const paperOffsetX = currentX * 0.25;
+      drawPaperReveal(
+        headX,
+        headY,
+        175 + beatGlow * 30,
+        0.68 + beatGlow * 0.24,
+        paperOffsetX,
+        0,
+        pattern,
+      );
+      if (pointerAlpha > 0.01) {
+        drawPaperReveal(
+          pointerX,
+          pointerY,
+          195,
+          0.65 * pointerAlpha,
+          paperOffsetX,
+          0,
+          pattern,
+        );
       }
-      for (let pass = 0; pass < 2; pass++) {
-        for (let i = 1; i < STRING_N - 1; i++) {
-          const avg = (disp[i - 1] + disp[i + 1]) * 0.5;
-          vel[i] += (avg - disp[i]) * 0.14;
-        }
+      for (const r of ripples) {
+        const t = r.age / r.maxAge;
+        drawPaperReveal(
+          r.x,
+          r.y,
+          40 + t * 115,
+          0.78 * (1 - t),
+          paperOffsetX,
+          0,
+          pattern,
+        );
       }
-      beatClock += dtSec * (liveBpm / 60);
-      sweepPhase = (sweepPhase + dtSec * (0.22 + speedNorm * 0.25)) % 1;
     }
 
-    // LAYER 1: Slow-Parallax Oscilloscope Coordinate Grid & Giant Faint Watermarks
-    const parallaxX = currentX * 0.35;
-    const gridSpacing = 180;
-    const firstGrid = Math.floor(parallaxX / gridSpacing) * gridSpacing;
-    ctx.strokeStyle = isDark ? "rgba(255,255,255,0.032)" : "rgba(10,10,10,0.042)";
+    // LAYER 1: Subtle single horizontal reference baseline
+    ctx.strokeStyle = isDark
+      ? "rgba(255,255,255,0.08)"
+      : "rgba(10,10,10,0.08)";
     ctx.lineWidth = 1;
     ctx.beginPath();
-    for (let gx = firstGrid; gx <= parallaxX + width + gridSpacing; gx += gridSpacing) {
-      const sx = gx - parallaxX;
-      ctx.moveTo(sx, 0);
-      ctx.lineTo(sx, height);
-    }
+    ctx.moveTo(0, midY);
+    ctx.lineTo(width, midY);
     ctx.stroke();
 
-    // Precision crosshairs (+) at coordinate intersections
-    ctx.strokeStyle = isDark ? "rgba(255,255,255,0.09)" : "rgba(10,10,10,0.10)";
-    ctx.beginPath();
-    for (let gx = firstGrid; gx <= parallaxX + width + gridSpacing; gx += gridSpacing) {
-      const sx = gx - parallaxX;
-      for (const cy of [midY - 125, midY + 125]) {
-        ctx.moveTo(sx - 4, cy);
-        ctx.lineTo(sx + 4, cy);
-        ctx.moveTo(sx, cy - 4);
-        ctx.lineTo(sx, cy + 4);
-      }
-    }
-    ctx.stroke();
-
-    // Fine centerline oscilloscope ruler ticks
-    const tickSpacing = 24;
-    const firstTick = Math.floor(currentX / tickSpacing) * tickSpacing;
-    ctx.strokeStyle = isDark ? "rgba(255,255,255,0.08)" : "rgba(10,10,10,0.085)";
-    ctx.beginPath();
-    for (let tx = firstTick; tx <= currentX + width + tickSpacing; tx += tickSpacing) {
-      const sx = tx - currentX;
-      const major = tx % 120 === 0;
-      const len = major ? 7 : 3;
-      ctx.moveTo(sx, midY - len);
-      ctx.lineTo(sx, midY + len);
-    }
-    ctx.stroke();
-
-    const sampleY = (screenX: number) => {
-      const worldX = screenX + currentX;
-      let y = midY;
-
-      // Station ECG anchor waves
-      const baseAmp = 21 + speedNorm * 10 + audioLevel * 8;
-      for (let i = 0; i < stationPositions.length; i++) {
-        const sx = stationPositions[i];
-        const boost = stationBoost[i] * 11;
-        y += ecgSample(worldX - sx, stationDirs[i], baseAmp + boost);
-      }
-
-      if (!reducedMotionQuery.matches) {
-        // Traveling resting heartbeat ripple
-        const pulseScreenX = sweepPhase * width;
-        const dPulse = screenX - pulseScreenX;
-        if (Math.abs(dPulse) < 64) {
-          y +=
-            Math.sin((dPulse / 64) * Math.PI) *
-            Math.exp(-(dPulse * dPulse) / 500) *
-            (7 + audioLevel * 10);
-        }
-
-        // Live Web Audio harmonic spectrum
-        if (audioPlaying) {
-          const norm = screenX / Math.max(1, width);
-          let binEnergy = audioLevel;
-          if (audioBins && audioBins.length > 0) {
-            const binIdx = Math.min(
-              audioBins.length - 1,
-              Math.floor(norm * (audioBins.length * 0.55)),
-            );
-            binEnergy = Math.max(audioLevel * 0.5, audioBins[binIdx] / 255);
-          }
-          y +=
-            Math.sin(screenX * 0.028 - now * 0.0065) * (3 + binEnergy * 18) +
-            Math.cos(screenX * 0.055 + now * 0.004) * (1.5 + binEnergy * 9);
-        }
-
-        // Cursor spring displacement
-        const idxFloat = (screenX / Math.max(1, width)) * (STRING_N - 1);
-        const i0 = Math.max(0, Math.min(STRING_N - 2, Math.floor(idxFloat)));
-        const frac = idxFloat - i0;
-        y += disp[i0] * (1 - frac) + disp[i0 + 1] * frac;
-      }
-
-      return y;
-    };
-
-    // Precompute primary trace Y samples across viewport width
-    const stepPx = 3;
-    const cols = Math.ceil(width / stepPx) + 1;
-    const ys = new Float32Array(cols);
-    for (let c = 0; c < cols; c++) {
-      ys[c] = sampleY(Math.min(width, c * stepPx));
-    }
-
-    const headX = sweepPhase * width;
-
-    // LAYER 2: Subtle vertical modulation / spectrum hairlines from midY to wave envelope
-    ctx.lineWidth = 1;
-    for (let c = 0; c < cols; c += 4) {
-      const sx = Math.min(width, c * stepPx);
-      const dy = ys[c] - midY;
-      if (Math.abs(dy) < 1.5) continue;
-      const nearHead = !reducedMotionQuery.matches && sx <= headX && sx >= headX - 95;
-      ctx.strokeStyle = nearHead
-        ? isDark
-          ? "rgba(255,77,0,0.25)"
-          : "rgba(230,62,0,0.20)"
-        : isDark
-          ? "rgba(255,255,255,0.11)"
-          : "rgba(10,10,10,0.10)";
-      ctx.beginPath();
-      ctx.moveTo(sx, midY);
-      ctx.lineTo(sx, ys[c]);
-      ctx.stroke();
-    }
-
-    // LAYER 3: 2 Phase-lagged Ghost Echo Traces for analog depth
-    const echoes = [
-      { lagCols: 5, scale: 0.36, alphaDark: 0.09, alphaLight: 0.1 },
-      { lagCols: 2, scale: 0.64, alphaDark: 0.19, alphaLight: 0.18 },
-    ];
-    for (const echo of echoes) {
-      ctx.beginPath();
-      for (let c = 0; c < cols; c++) {
-        const sx = Math.min(width, c * stepPx);
-        const srcIdx = Math.max(0, c - echo.lagCols);
-        const ey = midY + (ys[srcIdx] - midY) * echo.scale;
-        if (c === 0) ctx.moveTo(sx, ey);
-        else ctx.lineTo(sx, ey);
-      }
-      ctx.strokeStyle = isDark
-        ? `rgba(244,244,242,${echo.alphaDark})`
-        : `rgba(10,10,10,${echo.alphaLight})`;
-      ctx.lineWidth = 1;
-      ctx.stroke();
-    }
-
-    // LAYER 4: Primary Live Heartbeat Trace
-    ctx.beginPath();
-    for (let c = 0; c < cols; c++) {
-      const sx = Math.min(width, c * stepPx);
-      if (c === 0) ctx.moveTo(sx, ys[c]);
-      else ctx.lineTo(sx, ys[c]);
-    }
-    ctx.strokeStyle = audioPlaying || speedNorm > 0.05 ? activeColor : lineColor;
-    ctx.lineWidth = 1.45;
-    ctx.stroke();
-
-    // Signal Orange sweep segment + phosphor head dot
-    if (!reducedMotionQuery.matches) {
-      const headStart = Math.max(0, headX - 95);
-      const startCol = Math.max(0, Math.floor(headStart / stepPx));
-      const endCol = Math.min(cols - 1, Math.ceil(headX / stepPx));
-      ctx.beginPath();
-      for (let c = startCol; c <= endCol; c++) {
-        const sx = Math.min(width, c * stepPx);
-        if (c === startCol) ctx.moveTo(sx, ys[c]);
-        else ctx.lineTo(sx, ys[c]);
-      }
-      ctx.strokeStyle = accentColor;
-      ctx.lineWidth = 1.8;
-      ctx.stroke();
-
-      const headY = sampleY(headX);
-      ctx.save();
-      if (isDark) {
-        ctx.shadowColor = accentColor;
-        ctx.shadowBlur = 12;
-      }
-      ctx.beginPath();
-      ctx.arc(headX, headY, 3.2, 0, Math.PI * 2);
-      ctx.fillStyle = accentColor;
-      ctx.fill();
-      ctx.restore();
-    }
-
-    // Dynamic stems connecting existing above/below blocks to exact wave anchor
-    const stemEdgeOffset = window.innerHeight <= 750 ? 38 : 52;
+    // LAYER 2: Station stems (aligned to actual DOM block edges) & wire anchors
+    const canvasRect = canvas.getBoundingClientRect();
+    const fallbackGap = window.innerHeight <= 780 ? 36 : 44;
     stationPositions.forEach((worldSx, idx) => {
       const screenSx = worldSx - currentX;
       if (screenSx < -40 || screenSx > width + 40) return;
-      const anchorY = sampleY(screenSx);
-      const topEdgeY = hasAbove[idx] ? midY - stemEdgeOffset : anchorY;
-      const bottomEdgeY = hasBelow[idx] ? midY + stemEdgeOffset : anchorY;
+
+      const wireDisp = reducedMotionQuery.matches ? 0 : sampleStringDisp(screenSx);
+      const anchorY = midY + wireDisp;
+      const aboveEl = aboveEls[idx];
+      const belowEl = belowEls[idx];
+      const topEdgeY = aboveEl
+        ? Math.min(anchorY, aboveEl.getBoundingClientRect().bottom - canvasRect.top)
+        : anchorY;
+      const bottomEdgeY = belowEl
+        ? Math.max(anchorY, belowEl.getBoundingClientRect().top - canvasRect.top)
+        : anchorY;
+
       const isActive = hoveredStation === idx || pinnedStation === idx;
+      const sweepDist = (headX - screenSx + width) % width;
+      const sweepLit =
+        !reducedMotionQuery.matches && sweepDist >= 0 && sweepDist < 36;
+      const lit = isActive || sweepLit;
 
       ctx.beginPath();
-      ctx.moveTo(screenSx, topEdgeY);
-      ctx.lineTo(screenSx, bottomEdgeY);
+      ctx.moveTo(
+        screenSx,
+        aboveEl ? Math.min(topEdgeY, midY - fallbackGap * 0.2) : anchorY,
+      );
+      ctx.lineTo(
+        screenSx,
+        belowEl ? Math.max(bottomEdgeY, midY + fallbackGap * 0.2) : anchorY,
+      );
       ctx.strokeStyle = isActive ? accentColor : stemColor;
       ctx.lineWidth = 1;
       ctx.stroke();
@@ -817,14 +1183,107 @@ onPage((signal, cleanup) => {
       ctx.fillStyle = bgColor;
       ctx.fill();
       ctx.lineWidth = 1.5;
-      ctx.strokeStyle = isActive ? accentColor : activeColor;
+      ctx.strokeStyle = lit ? accentColor : activeColor;
       ctx.stroke();
     });
 
-    if (pointerActive && !reducedMotionQuery.matches && Math.abs(pointerY - midY) < 70) {
-      const lineY = sampleY(pointerX);
+    // LAYER 3: Phosphor-decay clinical ECG trace (with live string displacement)
+    ctx.lineJoin = "round";
+    ctx.lineCap = "round";
+
+    if (reducedMotionQuery.matches) {
       ctx.beginPath();
-      ctx.arc(pointerX, lineY, 2.5, 0, Math.PI * 2);
+      for (let c = 0; c < cols; c++) {
+        const sx = Math.min(width, c * COL_STEP);
+        const sy = midY - trace[c];
+        if (c === 0) ctx.moveTo(sx, sy);
+        else ctx.lineTo(sx, sy);
+      }
+      ctx.strokeStyle = lineColor;
+      ctx.lineWidth = 1.45;
+      ctx.stroke();
+      return;
+    }
+
+    const eraseCols = Math.min(cols - 4, Math.round(44 / COL_STEP));
+    const visibleCols = cols - eraseCols;
+    const accentCols = Math.min(visibleCols, Math.round(75 / COL_STEP));
+    const bands = 24;
+    const baseInk = audioPlaying || speedNorm > 0.05 ? activeColor : lineColor;
+
+    for (let b = bands - 1; b >= 0; b--) {
+      const ageStart = Math.min(
+        visibleCols - 1,
+        Math.round(((b + 1) / bands) * (visibleCols - 1)),
+      );
+      const ageEnd = Math.round((b / bands) * (visibleCols - 1));
+      if (ageStart <= ageEnd) continue;
+
+      const ageMid = (ageStart + ageEnd) * 0.5;
+      const inAccent = ageMid < accentCols;
+
+      ctx.beginPath();
+      for (let age = ageStart; age >= ageEnd; age--) {
+        const col = (((headCol - age) % cols) + cols) % cols;
+        const sx = Math.min(width, col * COL_STEP);
+        const sy = midY - trace[col] + sampleStringDisp(sx);
+        if (age === ageStart || col === 0) ctx.moveTo(sx, sy);
+        else ctx.lineTo(sx, sy);
+      }
+
+      if (inAccent) {
+        ctx.strokeStyle = accentColor;
+        ctx.globalAlpha = 0.98 - (ageMid / Math.max(1, accentCols)) * 0.22;
+        ctx.lineWidth = 1.75;
+      } else {
+        ctx.strokeStyle = baseInk;
+        const tailNorm =
+          (ageMid - accentCols) / Math.max(1, visibleCols - accentCols);
+        ctx.globalAlpha = 0.92 - tailNorm * 0.76;
+        ctx.lineWidth = 1.45;
+      }
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+
+    // Expanding ripple rings from click / hover detents
+    for (const r of ripples) {
+      const t = r.age / r.maxAge;
+      const radius = 4 + t * 34;
+      ctx.beginPath();
+      ctx.arc(r.x, r.y, radius, 0, Math.PI * 2);
+      ctx.strokeStyle = accentColor;
+      ctx.globalAlpha = 0.65 * (1 - t) * (1 - t);
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+
+    // Glowing scan-head dot
+    ctx.save();
+    ctx.shadowColor = accentColor;
+    ctx.shadowBlur = isDark ? 10 : 6;
+    ctx.beginPath();
+    ctx.arc(headX, headY, 3, 0, Math.PI * 2);
+    ctx.fillStyle = accentColor;
+    ctx.fill();
+    ctx.restore();
+
+    // Live magnetic cursor probe bead along baseline
+    if (pointerActive && Math.abs(pointerY - midY) < 64) {
+      const pCol = Math.max(0, Math.min(cols - 1, Math.round(pointerX / COL_STEP)));
+      const lineY = midY - trace[pCol] + sampleStringDisp(pointerX);
+      ctx.strokeStyle = accentColor;
+      ctx.globalAlpha = 0.45;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(pointerX, lineY - 10);
+      ctx.lineTo(pointerX, lineY + 10);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+
+      ctx.beginPath();
+      ctx.arc(pointerX, lineY, 2.6, 0, Math.PI * 2);
       ctx.fillStyle = accentColor;
       ctx.fill();
     }
@@ -838,13 +1297,13 @@ onPage((signal, cleanup) => {
     }
     const dtSec = lastTime ? Math.min(0.05, (now - lastTime) / 1000) : 0.016;
     lastTime = now;
-    drawFrame(now, dtSec);
+    drawFrame(dtSec);
     rafId = requestAnimationFrame(loop);
   };
 
   const startLoop = () => {
     if (reducedMotionQuery.matches || document.hidden) {
-      drawFrame(0, 0);
+      drawFrame(0);
       return;
     }
     if (!rafId) {
@@ -865,7 +1324,7 @@ onPage((signal, cleanup) => {
   ro.observe(canvas);
 
   const themeObserver = new MutationObserver(() => {
-    if (reducedMotionQuery.matches) drawFrame(0, 0);
+    if (reducedMotionQuery.matches) drawFrame(0);
   });
   themeObserver.observe(document.documentElement, {
     attributes: true,
@@ -885,7 +1344,9 @@ onPage((signal, cleanup) => {
     () => {
       if (reducedMotionQuery.matches) {
         stopLoop();
-        drawFrame(0, 0);
+        prefillDesktopTrace();
+        prefillMobileTrace();
+        drawFrame(0);
       } else {
         startLoop();
       }

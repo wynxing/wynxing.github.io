@@ -2,7 +2,7 @@
 
 Wynn 的个人网站：一个可以认识 Wynn、看看他的作品、读文章，也可以在实时物理心率线上停留、听歌并交互的个人主页。文章是其中一个板块，首页以高对比无框雕塑排版、顶部悬浮硬件感音频面板与实时 Canvas 脉搏线组织体验。
 
-当前视觉方向为「Live Physical Signal」（浅色粉笔白 / 深色极夜黑 + 精密信号橙、全站去卡片边框、顶部悬浮 Web Audio 联动硬件播放器、鼠标可拨动且随滚轮速度改变 BPM 的物理心率线；手机端转为左侧纵向脉搏脊线）。保留站名、黑猫头像和真实内容。
+当前视觉方向为「Live Physical Signal」（浅色粉笔白 / 深色极夜黑 + 精密信号橙、全站去卡片边框、顶部悬浮 Web Audio 联动硬件播放器、随滚轮速度与音乐改变 BPM 的真实临床心电监护扫描线；手机端转为左侧纵向心电扫描脊线）。保留站名、黑猫头像和真实内容。
 
 ## 当前定位与文档入口
 
@@ -45,15 +45,20 @@ The homepage is a borderless high-contrast gallery (`#f5f5f3` light / `#070707`
 dark with `#e63e00` / `#ff4d00` signal orange accents and subtle matte grain):
 a slim top utility bar, a centered Braun-inspired floating audio deck wired into
 Web Audio `AnalyserNode`, the original pixel black-cat avatar, and a live 60fps
-HTML5 Canvas heartbeat instrument with slow-parallax coordinate markings, dual
-ghost echo traces, vertical modulation hairlines, and five borderless stations
-paired with cross-line live mirror previews. Desktop scrolling uses damped
-spring inertia and modulates live BPM, cursor proximity plucks the string
-physics, and hovering works/essays updates the opposite inspect panels while
-exciting localized wave resonance. Inner pages render directly on the full-bleed
+HTML5 Canvas clinical ECG monitor sweep (sharp upward P-QRS-T waveforms, flat
+resting baselines, phosphor-decay trail with an erase gap ahead of the scan head,
+a soft cardiac-breathing ambient light field, and a world-locked 5:1 ECG chart
+paper micro-grid revealed locally around the scan head, cursor, and click ripples)
+connecting four clean borderless stations (`Wynn`, `项目`, `文章`, `存档`) with
+cross-line live mirror previews for works and essays. Desktop scrolling uses
+damped spring inertia and modulates live BPM, moving the cursor near the
+baseline provides magnetic probe tension and plucks the taut spring wire,
+clicking the line spawns ripple rings and accelerates the heartbeat before
+relaxing, hovering items plucks the station node, and active audio gently
+modulates heart rate and pulse amplitude. Inner pages render directly on the full-bleed
 canvas with serif headings and monospace metadata. The default theme follows the
 OS; explicit choices persist under `theme`. Mobile layouts draw a live vertical
-pulse spine along the left margin and keep a compact collapsible top audio deck.
+ECG sweep along the left margin and keep a compact collapsible top audio deck.
 Reduced-motion and reduced-transparency preferences are respected.
 
 Astro ClientRouter preserves a single audio element across internal navigation.

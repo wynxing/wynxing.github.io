@@ -727,9 +727,66 @@ input[type="range"] {
   body.is-home .site-footer {
     display: none;
   }
+
+  body.is-home .music-stage {
+    position: fixed;
+    top: 56px;
+    left: 0;
+    right: 0;
+    padding: 0 16px;
+  }
+
+  body.is-home .music-player:not(.is-mini) {
+    width: min(760px, calc(100% - 32px));
+    padding: 6px 14px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 16px;
+  }
+
+  body.is-home .music-player:not(.is-mini) .music-main-row {
+    flex: 0 1 auto;
+    gap: 10px;
+  }
+
+  body.is-home .music-player:not(.is-mini) .music-cover {
+    width: 30px;
+    height: 30px;
+    padding: 5px 4px;
+  }
+
+  body.is-home .music-player:not(.is-mini) .deck-topline {
+    display: none;
+  }
+
+  body.is-home .music-player:not(.is-mini) .music-meta {
+    flex: 0 1 auto;
+    max-width: 170px;
+  }
+
+  body.is-home .music-player:not(.is-mini) .music-details {
+    flex: 1 1 260px;
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
+    gap: 12px;
+  }
+
+  body.is-home .music-player:not(.is-mini) .music-note {
+    display: none;
+  }
+
+  body.is-home .music-player:not(.is-mini) .music-error {
+    flex: 1 0 100%;
+    margin-top: 2px;
+  }
 }
 
 .pulse-home {
+  --pulse-mid: 48%;
+  --pulse-above-gap: clamp(32px, 4.2vh, 42px);
+  --pulse-below-gap: clamp(26px, 3.6vh, 36px);
   flex: 1;
   min-height: 0;
   display: flex;
@@ -762,9 +819,8 @@ input[type="range"] {
 
 .pulse-stage {
   position: relative;
-  width: 2520px;
+  width: 2200px;
   height: 100%;
-  min-height: 460px;
   will-change: transform;
   z-index: 2;
 }
@@ -784,12 +840,12 @@ input[type="range"] {
 
 .pulse-station.is-above,
 .pulse-mirror.is-above {
-  bottom: calc(50% + 52px);
+  bottom: calc(100% - var(--pulse-mid) + var(--pulse-above-gap));
 }
 
 .pulse-station.is-below,
 .pulse-mirror.is-below {
-  top: calc(50% + 52px);
+  top: calc(var(--pulse-mid) + var(--pulse-below-gap));
 }
 
 .station-head {
@@ -798,20 +854,14 @@ input[type="range"] {
   justify-content: space-between;
   gap: 16px;
   padding-bottom: 0;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
-.station-code {
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 0.16em;
+.station-label {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
   color: var(--muted);
-}
-
-.station-code em {
-  font-style: normal;
-  color: var(--accent);
-  margin-right: 6px;
 }
 
 .station-sub {
@@ -831,15 +881,10 @@ input[type="range"] {
   font-size: 12px;
 }
 
-/* Station 01: Sculptural Identity & Below Telemetry Mirror */
+/* Station 0: Sculptural Identity */
 .station-identity {
   width: 390px;
-  padding-bottom: 14px;
-}
-
-.station-mirror--telemetry {
-  width: 380px;
-  padding-top: 12px;
+  padding-bottom: 6px;
 }
 
 .identity-hero {
@@ -890,17 +935,12 @@ input[type="range"] {
 /* Cross-line mirror typography */
 .station-mirror--project {
   width: 460px;
-  padding-bottom: 14px;
+  padding-bottom: 6px;
 }
 
 .station-mirror--writing {
   width: 430px;
-  padding-top: 14px;
-}
-
-.station-mirror--end {
-  width: 300px;
-  padding-top: 14px;
+  padding-top: 6px;
 }
 
 .mirror-title {
@@ -955,7 +995,7 @@ input[type="range"] {
 /* Station 02: Borderless Works List */
 .station-projects {
   width: 460px;
-  padding-top: 14px;
+  padding-top: 6px;
 }
 
 .bare-list {
@@ -969,7 +1009,8 @@ input[type="range"] {
   align-items: baseline;
   justify-content: space-between;
   gap: 14px;
-  padding: 8px 0;
+  padding: 6px 0;
+  line-height: 1.45;
   color: var(--text);
   transition: padding-left 0.2s var(--ease-spring);
 }
@@ -1030,49 +1071,16 @@ input[type="range"] {
   }
 }
 
-/* Station 03: Writing */
+/* Station 2: Writing */
 .station-writing {
   width: 440px;
-  padding-bottom: 14px;
+  padding-bottom: 6px;
 }
 
-/* Station 04: Signal Telemetry */
-.station-signal {
-  width: 340px;
-  padding-top: 14px;
-}
-
-.signal-telemetry {
-  margin: 0;
-}
-
-.signal-telemetry > div {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 14px;
-  padding: 7px 0;
-}
-
-.signal-telemetry dt {
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  color: var(--muted);
-}
-
-.signal-telemetry dd {
-  margin: 0;
-  font-size: 12.5px;
-  font-family: var(--mono);
-  font-variant-numeric: tabular-nums;
-  text-align: right;
-}
-
-/* Station 05: Outpost */
+/* Station 3: Outpost */
 .station-outpost {
   width: 300px;
-  padding-bottom: 14px;
+  padding-top: 6px;
 }
 
 .outpost-statement {
@@ -1173,11 +1181,6 @@ input[type="range"] {
   color: var(--accent);
   min-width: 56px;
   text-align: right;
-}
-
-.pulse-rail-hint {
-  color: var(--muted);
-  white-space: nowrap;
 }
 
 /* Inner Pages: Full-Bleed Borderless Editorial Canvas */
@@ -2026,17 +2029,28 @@ html .search-panel .pagefind-ui .pagefind-ui__result-excerpt mark {
   font-size: 11px;
 }
 
-@media (min-width: 900px) and (max-height: 750px) {
-  .music-stage {
-    padding: 8px 16px 2px;
+@media (min-width: 900px) and (max-height: 780px) {
+  body.is-home .music-stage {
+    top: 52px;
   }
-  .pulse-station.is-above,
-  .pulse-mirror.is-above {
-    bottom: calc(50% + 38px);
+  .station-head {
+    margin-bottom: 6px;
   }
-  .pulse-station.is-below,
-  .pulse-mirror.is-below {
-    top: calc(50% + 38px);
+  .bare-row {
+    padding: 4.5px 0;
+  }
+  .mirror-title {
+    font-size: 20px;
+  }
+  .mirror-role {
+    margin-bottom: 6px;
+  }
+  .mirror-highlight {
+    font-size: 12.5px;
+    line-height: 1.5;
+  }
+  .mirror-desc {
+    -webkit-line-clamp: 2;
   }
 }
 
@@ -2109,6 +2123,18 @@ html .search-panel .pagefind-ui .pagefind-ui__result-excerpt mark {
     cursor: default;
   }
 
+  .pulse-home {
+    background-image:
+      radial-gradient(ellipse 90% 42% at 20% 14%, rgba(218, 186, 152, 0.14), transparent 70%),
+      radial-gradient(ellipse 85% 44% at 85% 78%, rgba(148, 172, 192, 0.12), transparent 70%);
+  }
+
+  :root[data-theme="dark"] .pulse-home {
+    background-image:
+      radial-gradient(ellipse 90% 42% at 20% 14%, rgba(255, 115, 45, 0.05), transparent 70%),
+      radial-gradient(ellipse 85% 44% at 85% 78%, rgba(90, 138, 190, 0.055), transparent 70%);
+  }
+
   .pulse-canvas {
     width: 40px;
     right: auto;
@@ -2145,19 +2171,6 @@ html .search-panel .pagefind-ui .pagefind-ui__result-excerpt mark {
 
   .station-mirror--hover {
     display: none;
-  }
-
-  .pulse-mirror.station-mirror--telemetry {
-    position: relative;
-    left: auto !important;
-    top: auto;
-    bottom: auto;
-    transform: none;
-    width: 100%;
-    min-width: 0;
-    max-width: 100%;
-    padding: 6px 0 0;
-    margin-top: -14px;
   }
 
   .pulse-stage.has-hover .pulse-station:not(.is-focused),
